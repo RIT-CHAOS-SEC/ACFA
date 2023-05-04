@@ -73,7 +73,7 @@ parameter META_min = 16'h0140;
 parameter META_max = 16'h0140 + 16'h0100 - 16'h0001;
   
 //==================================================================
-// CFA Module: Uses modules from VRASED and GAROTA
+// CFA Module: Monitors for MCU Control Flow and TCB triggering
 //==================================================================
 wire cflow_reset;
 cflow #()
