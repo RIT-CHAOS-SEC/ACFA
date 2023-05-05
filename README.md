@@ -13,7 +13,7 @@ This github repository provides an open-source reference implementation of ACFA 
 
 ## Video Demo
 
-[A video demonstration of ACFA is avilable here](https://github.com/AnonymousAuthors729/ACFA/tree/main/video)
+[A video demonstration of ACFA is avilable here](https://github.com/RIT-CHAOS-SEC/ACFA/tree/main/video)
 
 
 ## Dependencies Installation
