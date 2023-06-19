@@ -1,0 +1,11 @@
+angr/__pycache__
+demo_vrf/__pycache__
+vivado/
+docs/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+scripts/tmp-build/*
+logs/*.cflog

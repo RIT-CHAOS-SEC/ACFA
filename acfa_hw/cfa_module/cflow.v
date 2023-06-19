@@ -10,6 +10,7 @@
 `include "branch_monitor.v"
 `include "boundary_monitor.v"
 `include "loop_monitor.v"
+`include "logger.v"
 
 `ifdef OMSP_NO_INCLUDE
 `else
@@ -41,7 +42,7 @@ module cflow (
     
     cflow_hw_wen,
     cflow_log_ptr,
-    
+    // cflow_log_ptr_prev,
     cflow_src,
     cflow_dest,
     
@@ -69,16 +70,27 @@ input   [7:0]   inst_so;
 // 
 output          cflow_hw_wen;
 output  [15:0]  cflow_log_ptr;
+// output  [15:0]  cflow_log_ptr_prev;
 output  [15:0]  cflow_src;
 output  [15:0]  cflow_dest; 
 output          reset;
 output          flush;
-output         boot;
-output         ER_done;
+output          boot;
+output          ER_done;
 
 parameter LOG_SIZE = 16'h0080; // # of 2-byte words
+parameter TCB_max = 16'hdffe; 
+parameter RESET_addr = 16'he000;
+parameter PMEM_min = 16'he03e;
 
-wire   reset_boundary;
+reg tcb_boot_done = 0;
+reg [15:0] prev_pc;
+// wire [15:0] cflow_log_prev_ptr;
+wire [31:0] loop_ctr;
+wire loop_detect_out;
+wire acfa_nmi = irq_ta0 | flush | ER_done | boot;
+// wire pc_TCB_exit = (pc == TCB_max);
+
 boundary_monitor #() 
 boundary_monitor_0 ( // Boundary Protection
     .clk        (clk),
@@ -89,12 +101,8 @@ boundary_monitor_0 ( // Boundary Protection
     .dma_en     (dma_en),
     .ER_min     (ER_min),
     .ER_max     (ER_max),
-    .reset      (reset_boundary) 
+    .reset      (reset) 
 );
-
-assign reset = reset_boundary;
-
-wire [15:0] cflow_log_prev_ptr;
 
 log_monitor #(
     .LOG_SIZE (LOG_SIZE)
@@ -106,19 +114,17 @@ log_monitor_0 (
     
     .ER_min     (ER_min),
     .ER_max     (ER_max),
-
+ 
     .irq        (irq),
     .reset      (puc),
-    .loop_detect    (loop_detect_out[0]),
+    .loop_detect    (loop_detect_out),
     .branch_detect  (branch_detect),
 
     .flush      (flush),
     .hw_wr_en       (cflow_hw_wen),
-    .cflow_log_ptr  (cflow_log_ptr),
-    .cflow_log_prev_ptr (cflow_log_prev_ptr)
+    .cflow_log_ptr  (cflow_log_ptr)
+    // .cflow_log_ptr_prev (cflow_log_ptr_prev)
 );
-
-wire acfa_nmi = irq_ta0 | flush | ER_done | boot;
 
 branch_monitor #(
     .LOG_SIZE (LOG_SIZE)
@@ -139,47 +145,47 @@ branch_monitor_0( //Branch Monitor
     .branch_detect (branch_detect)
 );
 
-reg [15:0] prev_pc;
-
 always @(posedge clk)
 begin
     prev_pc <= pc;  
 end
 
-wire [31:0] loop_ctr;
-wire [15:0] loop_detect_out;
 loop_monitor loop_monitor_0(
     .clk            (clk),    
     .pc             (pc),
     .pc_nxt         (pc_nxt),
-    .prev_pc        (prev_pc),
+    // .prev_pc        (prev_pc),
     
-    .acfa_nmi       (acfa_nmi),
-    .hw_wr_en       (cflow_hw_wen),
+    // .acfa_nmi       (acfa_nmi),
+    // .hw_wr_en       (cflow_hw_wen),
     .branch_detect  (branch_detect),
     
     .loop_detect    (loop_detect_out),
+    .loop_ctr       (loop_ctr)
+);
+
+logger logger_0(
+    // .clk            (clk),
+    .pc             (pc),
+    .prev_pc        (prev_pc),
+    
+    .loop_detect    (loop_detect_out),
+    .loop_ctr       (loop_ctr),
     .cflow_src      (cflow_src),
     .cflow_dest     (cflow_dest)
 );
 
-parameter TCB_min = 16'hdffe; 
-parameter RESET_addr = 16'he000;
-parameter PMEM_min = 16'he03e;
-
-reg tcb_boot_done = 0;
 always @(posedge clk) 
 begin
-   if(pc == TCB_min)
+   if(pc == TCB_max)
       tcb_boot_done <= 1'b1;
-   else if(pc == RESET_addr)
+   else if(reset)
       tcb_boot_done <= 1'b0;
    else
       tcb_boot_done <= tcb_boot_done;
 end
 
-assign ER_done = (pc == ER_max) && tcb_boot_done;
+assign ER_done = (pc == ER_max) & tcb_boot_done;
 assign boot = (pc == PMEM_min);
 
-
-endmodule
+endmodule //cflow

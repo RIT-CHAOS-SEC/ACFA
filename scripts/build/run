@@ -20,4 +20,4 @@ submitfile="./build/submit.f"
 incfile="../openmsp430/msp_core/openMSP430_defines.v"
 ./build/acfasim $cfolder $2
 
-rm -rf $folder
+# rm -rf $folder

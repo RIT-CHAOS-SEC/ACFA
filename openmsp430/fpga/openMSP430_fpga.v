@@ -383,15 +383,11 @@ wire               hw_uart_txd;
 wire               hw_uart_rxd;
 
 // VAPE metadata
-wire        [15:0] per_dout_vape_metadata;
 wire        [15:0] ER_min;
 wire        [15:0] ER_max;
-wire        [15:0] OR_min;
-wire        [15:0] OR_max;
-wire               exec_flag;
 
 // CFLOW metadata
-wire        [15:0]  per_dout_cflow_metadata;
+wire        [15:0]  per_dout_acfa_memory;
 wire                cflow_hw_wen;   
 wire        [15:0]  cflow_log_ptr;
 wire        [15:0]  cflow_src; 
@@ -618,10 +614,7 @@ openMSP430 openMSP430_0 (
     .scan_mode         (1'b0),         // ASIC ONLY: Scan mode
     .wkup              (1'b0),          // ASIC ONLY: System Wake-up (asynchronous and non-glitchy)
     .ER_min            (ER_min),
-    .ER_max            (ER_max),       // VAPE
-    .OR_min            (OR_min),
-    .OR_max            (OR_max)       // VAPE
-//    .LOG_size          (LOG_size)
+    .ER_max            (ER_max)       // VAPE
 );
 
 
@@ -822,13 +815,13 @@ omsp_uart #(.BASE_ADDR(15'h0080)) uart_0 (
 // acfa_memory
 //-----------------------------------------------
 //wire [15:0] LOG_size; 
+`ifdef ACFA_EQUIPPED
 acfa_memory acfa_memory_0 (
 
 // OUTPUTs
-    .per_dout           (per_dout_cflow_metadata), // Peripheral data output
+    .per_dout           (per_dout_acfa_memory), // Peripheral data output
     .ER_min             (ER_min),                          // VAPE ER_min
     .ER_max             (ER_max),                          // VAPE ER_max
-//    .LOG_size           (LOG_size),
 
 // INPUTs
     .mclk               (mclk),                           // Main system clock
@@ -836,30 +829,23 @@ acfa_memory acfa_memory_0 (
     .per_din            (per_din),       // Peripheral data input
     .per_en             (per_en),        // Peripheral enable (high active)
     .per_we             (per_we),        // Peripheral write enable (high active)
-    .cflow_logs_ptr_din (cflow_log_ptr),             // Control Flow: pointer to logs being modified
-    .cflow_src          (cflow_src),                      // Control Flow: jump from
-    .cflow_dest         (cflow_dest),                     // Control Flow: jump to
-    .cflow_hw_wen       (cflow_hw_wen),                   // Control Flow, write enable (only hardware can trigger)
-    .puc_rst            (puc_rst)                          // Main system reset
+    .cflow_logs_ptr_din (cflow_log_ptr), // Control Flow: pointer to logs being modified
+    .cflow_src          (cflow_src),     // Control Flow: jump from
+    .cflow_dest         (cflow_dest),    // Control Flow: jump to
+    .cflow_hw_wen       (cflow_hw_wen),  // Control Flow, write enable (only hardware can trigger)
+    .puc_rst            (puc_rst)        // Main system reset
 );
-
-//
-// Combine peripheral data buses
-//-------------------------------
-
-assign per_dout = per_dout_dio  |
-                  per_dout_tA   | 
-                  per_dout_uart |
-                  per_dout_cflow_metadata;
+`endif
 
 //   
 // Assign interrupts  
 //-------------------------------
 
-wire acfa_nmi = flush | boot | ER_done | irq_ta0;
-//wire acfa_nmi = 1'b0; 
 assign nmi        =  1'b0;
-assign irq_bus    = {acfa_nmi,     // Vector 13  (0xFFFA)
+
+
+`ifdef ACFA_EQUIPPED
+assign irq_bus    = {flush | boot | ER_done | irq_ta0,     // Vector 13  (0xFFFA)
                      1'b0,         // Vector 12  (0xFFF8)
                      irq_uart_rx,  // Vector 11  (0xFFF6)
                      1'b0,         // Vector 10  (0xFFF4) - Watchdog -
@@ -873,7 +859,32 @@ assign irq_bus    = {acfa_nmi,     // Vector 13  (0xFFFA)
                      irq_port1,    // Vector  2  (0xFFE4)
                      1'b0,         // Vector  1  (0xFFE2)
                      1'b0};        // Vector  0  (0xFFE0)
- 
+`else 
+assign irq_bus    = {1'b0,     // Vector 13  (0xFFFA)
+                     1'b0,         // Vector 12  (0xFFF8)
+                     irq_uart_rx,  // Vector 11  (0xFFF6)
+                     1'b0,         // Vector 10  (0xFFF4) - Watchdog -
+                     irq_ta0,      // Vector  9  (0xFFF2)
+                     irq_ta1,      // Vector  8  (0xFFF0)
+                     1'b0,         // Vector  7  (0xFFEE)
+                     irq_uart_tx,  // Vector  6  (0xFFEC) 
+                     1'b0,         // Vector  5  (0xFFEA)
+                     1'b0,         // Vector  4  (0xFFE8)
+                     irq_port2,    // Vector  3  (0xFFE6)
+                     irq_port1,    // Vector  2  (0xFFE4)
+                     1'b0,         // Vector  1  (0xFFE2)
+                     1'b0};        // Vector  0  (0xFFE0)
+`endif
+
+//
+// Combine peripheral data buses
+//-------------------------------
+assign per_dout = per_dout_dio  |
+                  per_dout_tA   | 
+                  per_dout_uart |
+                  per_dout_acfa_memory;
+
+
 //
 // GPIO Function selection
 //--------------------------
@@ -1003,24 +1014,17 @@ ram #(`DMEM_MSB, `DMEM_SIZE) dmem_0 (
     .ram_wen     (dmem_wen)            // Data Memory write enable (low active)
 );
    
-// Program Memory
-// parameter ER_MAX_addr   =  16'hFF00;
-// parameter OR_MAX_addr   =  ER_MAX_addr + 16'h0002;
-// parameter EXEC_addr   =  ER_MAX_addr + 16'h0004;
 pmem #(`PMEM_MSB, `PMEM_SIZE)//, ER_MAX_addr, OR_MAX_addr, EXEC_addr)
 pmem_0 (
 
 // OUTPUTs
     .ram_dout    (pmem_dout),          // Program Memory data output
-//    .ER_max      (ER_max),             // VAPE
-//    .OR_max      (OR_max),             // VAPE
 // INPUTs
     .ram_addr    (pmem_addr),          // Program Memory address
     .ram_cen     (pmem_cen),           // Program Memory chip enable (low active)
     .ram_clk     (mclk),               // Program Memory clock
     .ram_din     (pmem_din),           // Program Memory data input
     .ram_wen     (pmem_wen)            // Program Memory write enable (low active)
-//    .exec_flag   (exec_flag)            // VAPE
 );
 
 //=============================================================================

@@ -70,8 +70,15 @@ input        [1:0] ram_wen;        // RAM write enable (low active)
 
 // RAM 
 //============
- 
+
+`ifdef ACFA_HW_ONLY
+// To get LUT/FF
+(* ram_style = "block" *) reg         [15:0] mem [0:1]; 
+`else 
+// To emulate memory 
 (* ram_style = "block" *) reg         [15:0] mem [0:(MEM_SIZE/2)-1]; 
+`endif
+
 reg         [ADDR_MSB:0] ram_addr_reg;
 
 wire        [15:0] mem_val = mem[ram_addr];  

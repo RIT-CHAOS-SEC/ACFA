@@ -118,12 +118,9 @@ module  openMSP430 (
     scan_enable,                             // ASIC ONLY: Scan enable (active during scan shifting)
     scan_mode,                               // ASIC ONLY: Scan mode
     wkup,                                     // ASIC ONLY: System Wake-up (asynchronous and non-glitchy)
-//VAPE Inputs
+
     ER_min,
-    ER_max,
-    OR_min,
-    OR_max
-//    LOG_size
+    ER_max
 );
 
 // PARAMETERs
@@ -194,7 +191,7 @@ input                dma_en;                 // Direct Memory Access enable (hig
 input                dma_priority;           // Direct Memory Access priority (0:low / 1:high)
 input          [1:0] dma_we;                 // Direct Memory Access write byte enable (high active)
 input                dma_wkup;               // ASIC ONLY: DMA Wake-up (asynchronous and non-glitchy)
-input                nmi;                    // Non-maskable interrupt (asynchronous and non-glitchy)
+input                nmi;                    // Non-maskable interrupt (asynchronous and non-glitchy) 
 input         [15:0] per_dout;               // Peripheral data output
 input         [15:0] pmem_dout;              // Program Memory data output
 input                reset_n;                // Reset Pin (active low, asynchronous and non-glitchy)
@@ -203,9 +200,6 @@ input                scan_mode;              // ASIC ONLY: Scan mode
 input                wkup;                   // ASIC ONLY: System Wake-up (asynchronous and non-glitchy)
 input        [15:0] ER_min;
 input        [15:0] ER_max;
-input        [15:0] OR_min;
-input        [15:0] OR_max;
-//input        [15:0] LOG_size;
 
 //=============================================================================
 // 1)  INTERNAL WIRES/REGISTERS/PARAMETERS DECLARATION
@@ -300,8 +294,9 @@ wire [`SMEM_MSB:0] srom_addr;
 wire               srom_cen;
 wire               srom_wen;
 wire        [15:0] srom_dout;
+`ifdef ACFA_EQUIPPED
 wire               acfa_reset;
-
+`endif
 wire [`SKEY_MSB:0] skey_addr;
 wire               skey_cen;
 wire        [15:0] skey_dout;
@@ -359,8 +354,10 @@ omsp_clock_module clock_module_0 (
     .scan_mode         (scan_mode),          // Scan mode
     .scg0              (scg0),               // System clock generator 1. Turns off the DCO
     .scg1              (scg1),               // System clock generator 1. Turns off the SMCLK
-    .wdt_reset         (wdt_reset),           // Watchdog-timer reset
-    .acfa_reset        (acfa_reset)
+    `ifdef ACFA_EQUIPPED
+    .acfa_reset        (acfa_reset),
+    `endif
+    .wdt_reset         (wdt_reset)           // Watchdog-timer reset
 );
 
 assign mclk = dma_mclk;
@@ -593,10 +590,9 @@ omsp_mem_backbone mem_backbone_0 (
 );
 
 //=============================================================================
-// ACFA MODULES
+// ACFA Hardware
 //=============================================================================
-// // When removing acfa, uncomment below: 
-// assign flush = 0;
+`ifdef ACFA_EQUIPPED
 acfa acfa_0(
     .clk        (dma_mclk),
     .pc         (inst_pc),
@@ -632,6 +628,16 @@ acfa acfa_0(
     .boot       (boot),
     .ER_done    (ER_done)
 );
+// `else 
+// assign cflow_hw_wen = 1'b0;
+// assign cflow_log_ptr = 16'h0;
+// assign cflow_src = 16'h0;
+// assign cflow_dest = 16'h0;
+// assign reset = 1'b0;
+// assign flush = 1'b0;
+// assign boot = 1'b0;
+// assign ER_done = 1'b0;
+`endif
 
 //=============================================================================
 

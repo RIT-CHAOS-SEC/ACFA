@@ -59,27 +59,22 @@ wire is_write_META = data_en && (data_addr >= META_min && data_addr <= META_max)
 wire is_write_DMA_META = dma_en && (dma_addr >= META_min && dma_addr <= META_max);
 wire META_change = is_write_META || is_write_DMA_META;
 
-// detect write to ER by cpu or dma
-wire is_write_ER = data_en && (data_addr >= ER_min && data_addr <= ER_max) && outside_TCB;
-wire is_write_DMA_ER = dma_en && (dma_addr >= ER_min && dma_addr <= ER_max);
-wire ER_change = is_write_ER || is_write_DMA_ER;
-
 // detect write to LOG by cpu or dma
-wire is_write_LOG = data_en && (data_addr >= LOG_min && data_addr <= LOG_max) && outside_TCB;
+wire is_write_LOG = data_en && (data_addr >= LOG_min && data_addr <= LOG_max);
 wire is_write_DMA_LOG = dma_en && (dma_addr >= LOG_min && dma_addr <= LOG_max);
 wire LOG_change = is_write_LOG || is_write_DMA_LOG;
 
 always @(posedge clk)
-if( state == RUN && (META_change || ER_change || LOG_change)) 
+if( state == RUN && (META_change || LOG_change)) 
     state <= KILL;
-else if (state == KILL && (pc==RESET_HANDLER) && !META_change && !ER_change && !LOG_change)
+else if (state == KILL && (pc==RESET_HANDLER) && !META_change && !LOG_change)
     state <= RUN;
 else state <= state;
 
 always @(posedge clk)
-if (state == RUN && (META_change || ER_change || LOG_change)) 
+if (state == RUN && (META_change || LOG_change)) 
     reset_reg <= 1'b1;
-else if (state == KILL && (pc==RESET_HANDLER) && !META_change && !ER_change && !LOG_change)
+else if (state == KILL && (pc==RESET_HANDLER) && !META_change&& !LOG_change)
     reset_reg <= 1'b0;
 else if (state == KILL)
     reset_reg <= 1'b1;

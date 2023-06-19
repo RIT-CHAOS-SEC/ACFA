@@ -1,6 +1,9 @@
 ## Project params ## DO NOT MODIFY
 APP_LOGS_PATH = "../logs/"#"./"
 APP_NAME = "demo_prv"
+CFG_FILE_PATH = "./objs/cfg.bin"
+HMAC_PMEM_FILE_PATH = "./objs/pmem_hmac.bin"
+SHADOW_STACK_FILE_PATH = "./objs/shadow_stack.bin"
 
 # Log params
 CF_LOG_SIZE = 256 #in bytes

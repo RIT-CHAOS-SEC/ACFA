@@ -83,7 +83,7 @@ wire data_en = dut.openMSP430_0.acfa_0.data_en;
 wire data_wr = dut.openMSP430_0.acfa_0.data_wr;
 
 // acfa triggers
-wire       acfa_nmi = dut.acfa_nmi;
+wire       acfa_nmi = dut.openMSP430_0.acfa_0.cflow_0.acfa_nmi;
 wire       boot = dut.boot;
 wire       flush = dut.flush;
 wire       irq_ta0 = dut.irq_ta0;
@@ -190,15 +190,21 @@ always @(posedge logReady)
 begin 
 
     case(count)
-        0: slicefile=$fopen("0.cflog","w");
-        1: slicefile=$fopen("1.cflog","w");
-        2: slicefile=$fopen("2.cflog","w");
-        3: slicefile=$fopen("3.cflog","w");
+        0: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/0.cflog","w");
+        1: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/1.cflog","w");
+        2: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/2.cflog","w");
+        3: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/3.cflog","w");
+        4: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/4.cflog","w");
+        5: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/5.cflog","w");
+        6: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/6.cflog","w");
+        7: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/7.cflog","w");
+        8: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/8.cflog","w");
+        9: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/9.cflog","w");
     endcase
     
     for (i = 0; i < log_ptr; i = i +2) begin
        // $fdisplay(slicefile,"%h",dut.acfa_memory_0.logs.logs.ram[i]);  //write as hex 
-       $fdisplay(slicefile,"%h%h",dut.acfa_memory_0.logs.mem[i],dut.acfa_memory_0.logs.mem[i+1]);  //write as hex 
+       $fdisplay(slicefile,"%h%h",dut.acfa_memory_0.cflog.cflog[i],dut.acfa_memory_0.cflog.cflog[i+1]);  //write as hex 
         // $fdisplay(slicefile,"%h",dut.dmem_0.mem[16'h1100+i]);  //write as hex
     end
     $fdisplay(slicefile,"%d",log_ptr);  //write log_ptr as last value

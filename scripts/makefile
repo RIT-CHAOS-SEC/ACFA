@@ -1,6 +1,15 @@
+install:
+	apt-get install bison pkg-config gawk clang flex gcc-msp430 iverilog tcl-dev
+
 demo :
 	rm -f ../logs/*.cflog
+	sed -i 's/#define IS_SIM  SIM/#define IS_SIM  NOT_SIM/g' ../tcb/wrapper.c 
 	sh build/run "demo_prv" true
+
+sim:
+	rm -f ../logs/*.cflog
+	sed -i 's/#define IS_SIM  NOT_SIM/#define IS_SIM  SIM/g' ../tcb/wrapper.c 
+	sh build/run "ultrasonic_sensor" true
 
 ultrasonic_sensor:
 	rm -f ../logs/*.cflog

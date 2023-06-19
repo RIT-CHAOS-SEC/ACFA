@@ -14,9 +14,9 @@ module  acfa_memory (
     per_en,                         // Peripheral enable (high active)
     per_we,                         // Peripheral write enable (high active)
     cflow_logs_ptr_din,             // Control Flow: pointer to logs being modified
-    cflow_src,                      // Control Flow: jump from
-    cflow_dest,                     // Control Flow: jump to
-    cflow_hw_wen,                   // Control Flow, write enable (only hardware can trigger)
+    cflow_src,
+    cflow_dest,
+    cflow_hw_wen,
     puc_rst                         // Main system reset
 );
 
@@ -37,19 +37,16 @@ input        [1:0] per_we;          // Peripheral write enable (high active)
 input              puc_rst;         // Main system reset
 
 input       [15:0] cflow_logs_ptr_din;  // Control Flow: pointer to logs being modified
-input       [15:0] cflow_src;           // Control Flow: jump from
-input       [15:0] cflow_dest;          // Control Flow: jump to
-input              cflow_hw_wen;        // Control Flow, write enable (only hardware can trigger)
-
+input       [15:0] cflow_src;
+input       [15:0] cflow_dest;
+input              cflow_hw_wen;
 
 //=============================================================================
 // 1)  PARAMETER DECLARATION
 //=============================================================================
 
-// CFLOW's metadta consists of
 // BASE_ADDR = 0x140
 //  - 32*8 = 16*16 = 256 bits of challenge
-//  - 128*8 = 1024 bits of CFLOW logs
 //  - 16 bits of ER_min
 //  - 16 bits of ER_max
 //  - 16 bits of current log pointer  
@@ -186,21 +183,7 @@ wire                                cflow_cen       = per_en & per_addr >= CFLOW
                                                         // plus full size since each entry is 4 bytes, not 2
 wire    [15:0]                      cflow_dout;
 
-// CFLOW_logs_top #()
-// logs( 
-//     .dout_16bit         (cflow_dout),
-    
-//     .read_addr_16bit    (cflow_addr_reg),
-//     .write_addr_16bit   (cflow_logs_ptr),
-//     .clk                (mclk), 
-//     .din1_16bit         (cflow_src),      
-//     .din2_16bit         (cflow_dest),   
-//     .wen                (cflow_hw_wen),
-//     .cen                (~cflow_cen)
-// );
-
-logger logs (   
-
+cflogmem cflog (
     // OUTPUTs
     .ram_dout    (cflow_dout),           // Program Memory data output
     // INPUTs
@@ -211,6 +194,7 @@ logger logs (
     .ram_din1     (cflow_src),             // Program Memory data input
     .ram_din2     (cflow_dest),             // Program Memory data input
     .ram_wen     (cflow_hw_wen)            // Program Memory write enable (low active)
+    //    
 );
     
 wire [15:0]           cflow_rd       = cflow_dout & {16{cflow_cen & ~|per_we}};
@@ -231,20 +215,14 @@ end
 wire [15:0] ermin_rd     = ermin             & {16{reg_rd[ERMIN]}};
 wire [15:0] ermax_rd     = ermax             & {16{reg_rd[ERMAX]}};
 wire [15:0] cflow_logs_ptr_rd     = cflow_logs_ptr & {16{reg_rd[CLOGP]}};
-//wire [15:0] exec_rd      = {15'h000, exec} & {16{reg_rd[EXECFLAG]}};
-//wire [15:0] logsize_rd     = logsize             & {16{reg_rd[LOGSIZE]}};
 
 wire [15:0] per_dout  =  ermin_rd  |
                          ermax_rd  |
                          cflow_logs_ptr_rd |
-                         chal_rd   |
+                         chal_rd |
                          cflow_rd;
-//                           | 
-//                         exec_rd   | 
-//                         logsize_rd;
                          
 wire [15:0] ER_min = ermin;
 wire [15:0] ER_max = ermax;
-//wire [15:0] LOG_size = logsize;
  
 endmodule 

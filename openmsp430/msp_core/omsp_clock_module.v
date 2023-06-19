@@ -88,8 +88,10 @@ module  omsp_clock_module (
     scan_mode,                        // Scan mode
     scg0,                             // System clock generator 1. Turns off the DCO
     scg1,                             // System clock generator 1. Turns off the SMCLK
-    wdt_reset,                         // Watchdog-timer reset
-    acfa_reset
+    `ifdef ACFA_EQUIPPED 
+    acfa_reset,
+    `endif
+    wdt_reset                         // Watchdog-timer reset
 );
 
 // OUTPUTs
@@ -135,8 +137,10 @@ input               scan_enable;      // Scan enable (active during scan shiftin
 input               scan_mode;        // Scan mode
 input               scg0;             // System clock generator 1. Turns off the DCO
 input               scg1;             // System clock generator 1. Turns off the SMCLK
-input               wdt_reset;        // Watchdog-timer reset
+`ifdef ACFA_EQUIPPED 
 input               acfa_reset;
+`endif
+input               wdt_reset;        // Watchdog-timer reset
 
 //=============================================================================
 // 1)  WIRES & PARAMETER DECLARATION
@@ -1269,8 +1273,11 @@ wire puc_noscan_n;
 wire puc_a_scan;
 
 // Asynchronous PUC reset
+`ifdef ACFA_EQUIPPED
 wire puc_a = por | wdt_reset | acfa_reset;
-
+`else 
+wire puc_a = por | wdt_reset;
+`endif
 // Synchronous PUC reset
 wire puc_s = dbg_cpu_reset |                              // With the debug interface command
 

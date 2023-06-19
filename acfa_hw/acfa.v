@@ -17,7 +17,6 @@ module acfa (
 
     ER_min,
     ER_max,
-//    LOG_size,
     
     puc,
     

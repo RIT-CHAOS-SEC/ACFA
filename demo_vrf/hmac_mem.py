@@ -61,6 +61,7 @@ def hmac_mem(key, att_size):
 
 
 if __name__ == '__main__':
+	## Test example
 	key = []
 	for i in range(0, 32):
 		key.append(b'\x00')
