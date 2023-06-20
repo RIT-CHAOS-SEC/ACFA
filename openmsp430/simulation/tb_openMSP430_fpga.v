@@ -190,16 +190,16 @@ always @(posedge logReady)
 begin 
 
     case(count)
-        0: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/0.cflog","w");
-        1: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/1.cflog","w");
-        2: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/2.cflog","w");
-        3: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/3.cflog","w");
-        4: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/4.cflog","w");
-        5: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/5.cflog","w");
-        6: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/6.cflog","w");
-        7: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/7.cflog","w");
-        8: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/8.cflog","w");
-        9: slicefile=$fopen("C:/Users/adcau/Documents/ACFA/logs/9.cflog","w");
+        0: slicefile=$fopen("<LOGS_FULL_PATH>/0.cflog","w");
+        1: slicefile=$fopen("<LOGS_FULL_PATH>/1.cflog","w");
+        2: slicefile=$fopen("<LOGS_FULL_PATH>/2.cflog","w");
+        3: slicefile=$fopen("<LOGS_FULL_PATH>/3.cflog","w");
+        4: slicefile=$fopen("<LOGS_FULL_PATH>/4.cflog","w");
+        5: slicefile=$fopen("<LOGS_FULL_PATH>/5.cflog","w");
+        6: slicefile=$fopen("<LOGS_FULL_PATH>/6.cflog","w");
+        7: slicefile=$fopen("<LOGS_FULL_PATH>/7.cflog","w");
+        8: slicefile=$fopen("<LOGS_FULL_PATH>/8.cflog","w");
+        9: slicefile=$fopen("<LOGS_FULL_PATH>/9.cflog","w");
     endcase
     
     for (i = 0; i < log_ptr; i = i +2) begin

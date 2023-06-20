@@ -1,4 +1,38 @@
-#### Creating a Vivado Project for ACFA
+# Repository for ACFA
+
+## Paper - ACFA: Secure Runtime Auditing & Guaranteed Device Healing via Active Control Flow Attestation (https://arxiv.org/abs/2303.16282)
+
+### Description folders containing code and data
+
+`acfa_hw` - contains all Verilog files for ACFA hardware. Contains two subdirectories for ACFA's submodules: `active_rot_module` and `cfa_module`
+
+`demo_prv` - contains source and header files for the MCU prover to execute its code for the demo application
+
+`demo_vrf` - contains all Python code to execute the Verifier role of the demo application
+
+`logs` - olds current and previous CF-Log files. It is populated during experiments and demo.
+
+`msp_bin` - contains `*.mem` files used by Vivado to synthesis program memory onto the openMSP430
+
+`openmsp430` - contains all Verilog files for the open source MSP430 (openMSP430) from open-cores
+
+`scripts` - all build scripts for experiments
+
+`syringe_pump`, `ultrasonic_sensor`, `temperature_sensor` - software for example sensor applications
+
+`tcb` - contains all source and header files for ACFA software TCB.
+
+### Setup
+
+1- Clone this Repository
+
+2- `cd` into `scripts` and run `sudo make install`
+
+3- Install Xilinx Vivado: https://www.xilinx.com/support/download.html
+
+4- Install the folloing Python packages: serial, time, hmac, hashlib, argparse, pickle, dataclasses, os, collections
+
+### Create a Vivado Project for ACFA
 
 1- Start Vivado. On the upper left select: File -> New Project
 
@@ -41,3 +75,21 @@ This will make openMSP430_fpga.v the top module in the project hierarchy. Now it
 9- After adding `*.v` and `*.mem` files to the project, open a terminal window and `cd` into `scripts`.
 
 10- Run `make sim` to compile software for the basic test. This will update the `*.mem` files.
+
+### Basic Test
+
+1- Now we are ready to synthesize openmsp430 with ACFA hardware. On the left menu of the PROJECT MANAGER, click "Run Synthesis", and select execution parameters (e.g., number of CPUs used for synthesis) according to your PC's capabilities. This step takes 2-10 minutes.
+
+2- If synthesis succeeds, a window to "Run Implementation" will appear. Do not "Run Implementation" for the basic test, and close this prompt window.
+
+3- In Vivado, click "Add Sources" (Alt-A), then select "Add or create simulation sources", click "Add Files", and select everything inside `openmsp430/simulation`.
+
+4- Open the `tb_openMSP430_fpga.v` file and find lines 193-202. These lines open `*.cflog` files to simulate the transmission of \cflog slices for the basic test. Therefore in lines 193-202, replace `<LOGS_FULL_PATH>` with the full file path of the `logs` subdirectory of the ACFA directory.
+
+5- Now, navigate to the "Sources" window in Vivado. Search for `tb_openMSP430_fpga`, and in the "Simulation Sources" tab, right-click `tb_openMSP430_fpga.v` and set its file type as the top module.
+
+6- Go back to the Vivado window, and in the "Flow Navigator" tab (on the left-most part of Vivado's window), click "Run Simulation," then "Run Behavioral Simulation."
+
+7- On the newly opened simulation window, select 8ms as the time for the simulation to run. Then press "Shift+F2" to run.
+
+8- The simulation waveform will show two ACFA triggers occur during the execution due to the device boot and the program ending. In the `logs` sub-directory of the ACFA directory, two `*.cflog` files were generated. If two `*.cflog` files are generated and match the contents of `logs/expected_cflogs_basic_test/`, the basic test has completed successfully.
