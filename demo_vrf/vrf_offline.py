@@ -44,7 +44,7 @@ print("\t\twritten to '"+CFG_FILE_PATH+"'")
 
 stop = time.perf_counter()
 time_offline = stop-start
-print("DONE: Runtime of "+str(time_offline)+"s")
+# print("DONE: Runtime of "+str(time_offline)+"s")
 print("--------------------------------------------------")
 
 ##### 

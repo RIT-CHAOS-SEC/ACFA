@@ -39,7 +39,7 @@ key = [x.to_bytes(1,byteorder='big') for x in key]
 key = b''.join(key)
 
 aermin = b'\xe0\x00'
-aermax = b'\xe2\x64'
+aermax = b'\xe2\x46'
 
 max_log_size = 256
 
@@ -158,6 +158,11 @@ while last == 0 and app == 1:
 	time_cflog = stop-start
 	
 	print(logMessage[valid_cflog])
+	if not valid_cflog:
+		print("----------------------------------------------------------------")
+		print(" ")
+		print("INVALID CF-LOG -- Offending Log Entry: "+str(offending_node)+"Current CFG Node: Branch Source: "+str(current_node.end_addr)+", Possible Destinations: "+str(current_node.successors))
+		print(" ")
 	print("----------------------------------------------------------------")
 
 	##### 4b: VERIFY HMAC
@@ -352,19 +357,19 @@ while last == 0 and app == 1:
 
 	#####--------------------------------------
 	##### Print Timing
-	print("------------------- ROUND TIMING (S) ---------------------------")
-	print("Steps 1-3:\tReceive initial response (P --> V): "+str(time_recv_resp))
-	print("   Step 4:\tVrf runs verification: "+str(time_cflog+time_cmp_vrf_mac))
-	print("\t\t--Parse & verify CF-Log: "+str(time_cflog))
-	print("\t\t--Verify hmac: "+str(time_cmp_vrf_mac))
-	print("   Step 5:\tVrf Generate & response : "+str(time_gen_resp))
-	print("   Step 6:\tVrf Send response (V --> P): "+str(time_send_resp))
+	print("------------------- ROUND TIMING (S) ---------------------------", file=debugfile)
+	print("Steps 1-3:\tReceive initial response (P --> V): "+str(time_recv_resp), file=debugfile)
+	print("   Step 4:\tVrf runs verification: "+str(time_cflog+time_cmp_vrf_mac), file=debugfile)
+	print("\t\t--Parse & verify CF-Log: "+str(time_cflog), file=debugfile)
+	print("\t\t--Verify hmac: "+str(time_cmp_vrf_mac), file=debugfile)
+	print("   Step 5:\tVrf Generate & response : "+str(time_gen_resp), file=debugfile)
+	print("   Step 6:\tVrf Send response (V --> P): "+str(time_send_resp), file=debugfile)
 
-	print("Steps 7-9:\tPrv authenticate and decide next action: "+str(time_closing_steps))
+	print("Steps 7-9:\tPrv authenticate and decide next action: "+str(time_closing_steps), file=debugfile)
 	elapsed = time_recv_resp+time_cflog+time_cmp_vrf_mac+time_gen_send_resp
-	print("Elapsed time: "+str(elapsed))
+	print("Elapsed time: "+str(elapsed), file=debugfile)
 	print("last="+str(last), file=debugfile)
-	print("----------------------------------------------------------------")
+	print("----------------------------------------------------------------", file=debugfile)
 	print("======================================================================")
 	
 	report_num += 1
@@ -373,22 +378,22 @@ while last == 0 and app == 1:
 
 	# Append round data to the list [step 1-3 time, step 4 time, step 5 time, step 6 time, step 7-9 time]
 	runtime_rounds.append([time_recv_resp, total_s4, time_gen_resp, time_send_resp, time_closing_steps])
-	print(" ")
+	print(" ", file=debugfile)
 	#####--------------------------------------
 
 
 
-print("--------------------------------------------------")
-print("Average Protocol Run Time ("+str(report_num)+" reports)")
+print("--------------------------------------------------", file=debugfile)
+print("Average Protocol Run Time ("+str(report_num)+" reports)", file=debugfile)
 
-print("Round | Steps 1-3 | Step 4 | Step 5 | Step 6 | Step 7-9")
+print("Round | Steps 1-3 | Step 4 | Step 5 | Step 6 | Step 7-9", file=debugfile)
 for i in range(0, len(runtime_rounds)):
-	print("%d   " % i, end='')
+	print("%d   " % i, end='', file=debugfile)
 	for j in range(0, len(runtime_rounds[i])):
-		print("%s   " % str(runtime_rounds[i][j]), end='')
-	print()
-print("--------------------------------------------------")
-print(" ")
+		print("%s   " % str(runtime_rounds[i][j]), end='', file=debugfile)
+	print("", file=debugfile)
+print("--------------------------------------------------", file=debugfile)
+print(" ", file=debugfile)
 print("--------------------------------------------------")
 print("Exit condition: ")
 if not app:

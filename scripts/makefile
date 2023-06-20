@@ -6,6 +6,11 @@ demo :
 	sed -i 's/#define IS_SIM  SIM/#define IS_SIM  NOT_SIM/g' ../tcb/wrapper.c 
 	sh build/run "demo_prv" true
 
+demo_sim:
+	rm -f ../logs/*.cflog
+	sed -i 's/#define IS_SIM  NOT_SIM/#define IS_SIM  SIM/g' ../tcb/wrapper.c 
+	sh build/run "demo_prv" true
+
 sim:
 	rm -f ../logs/*.cflog
 	sed -i 's/#define IS_SIM  NOT_SIM/#define IS_SIM  SIM/g' ../tcb/wrapper.c 

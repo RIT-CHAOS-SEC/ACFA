@@ -1,3 +1,14 @@
+/**
+ * Adam Caulfield
+ * 
+ * ACFA Software TCB
+ * 
+ * wrapper.c
+ * 
+ * Executes each part of the ACFA TCB (Attest, Wait, Heal)
+ * 
+*/
+
 #include <string.h>
 #include "hardware.h"
 
@@ -29,7 +40,6 @@
 // Set ER_MIN/MAX based on setting
 #define PMEM_MIN  0xE000
 #define PMEM_MAX  &acfa_exit
-
 #define ER_MIN  PMEM_MIN
 #define ER_MAX  PMEM_MAX
 
@@ -43,13 +53,6 @@
 #define UART_TIMEOUT   0x167FFE
 #define ACK       'a'
 
-// DUMMY DATA TO TEST COMMUNICATION ONLY
-#define RESP_ADDR 0xb00
-#define KEY_ALT_ADDR 0xb20
-#define CHAL_XS 0xb40
-#define PRV_AUTH 0xb60
-#define VRF_AUTH 0xb80
-
 // Attested Program memory range
 #define ATTEST_DATA_ADDR   0xe000
 // #define ATTEST_SIZE        0x1fff //8kb
@@ -57,12 +60,17 @@
 // #define ATTEST_SIZE        0x07ff //2kb
 #define ATTEST_SIZE        0x03ff //1kb
 
-// Protocol variables in SData
+// Protocol temp variable addresses
 #define NEW_CHAL_ADDR         0xba4
 #define TMP_16_BUFF           0xbc4
 #define LOG_BASE_XS   0xca6
+#define RESP_ADDR 0xb00
+#define KEY_ALT_ADDR 0xb20
+#define CHAL_XS 0xb40
+#define PRV_AUTH 0xb60
+#define VRF_AUTH 0xb80
 
-// TCB version
+// TCB version // AUTOMATED: Do not edit
 #define NOT_SIM   0
 #define SIM   1
 #define IS_SIM  NOT_SIM
@@ -188,7 +196,7 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
     return;
 }
 
-// TCB_ATTEST
+/********** TCB ATTEST ************/ 
 __attribute__ ((section (".tcb.attest"))) void tcb_attest()
 {
  
@@ -200,37 +208,31 @@ __attribute__ ((section (".tcb.attest"))) void tcb_attest()
     }
 
     #else
-    // graph sdtata addrs for each obj
+    // addrs for each obj
     uint8_t * response = (uint8_t*)(RESP_ADDR);
     uint8_t * key = (uint8_t*)(KEY_ADDR);
     uint8_t * metadata = (uint8_t*)(METADATA_ADDR);
 
-    /********** TCB WAIT ************/
-    uint8_t readyByte = ACK;
+    my_memcpy((uint8_t*)(LOG_BASE_XS), (uint8_t*)(LOG_BASE), LOG_SIZE);
 
-    echo_tx_rx(&readyByte, 1);
-    if(readyByte == ACK){
-        my_memcpy((uint8_t*)(LOG_BASE_XS), (uint8_t*)(LOG_BASE), LOG_SIZE);
+    my_memcpy((uint8_t*)(CHAL_XS), (uint8_t*)(CHAL_BASE), CHAL_SIZE);
 
-        my_memcpy((uint8_t*)(CHAL_XS), (uint8_t*)(CHAL_BASE), CHAL_SIZE);
+    hmac(response, key, (uint32_t) KEY_SIZE, (uint8_t*)(ATTEST_DATA_ADDR), (uint32_t) ATTEST_SIZE);
 
-        hmac(response, key, (uint32_t) KEY_SIZE, (uint8_t*)(ATTEST_DATA_ADDR), (uint32_t) ATTEST_SIZE);
+    hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(CHAL_XS), (uint32_t) CHAL_SIZE);
 
-        hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(CHAL_XS), (uint32_t) CHAL_SIZE);
+    hmac(response, response, (uint32_t) KEY_SIZE, metadata, (uint32_t) METADATA_SIZE);
 
-        hmac(response, response, (uint32_t) KEY_SIZE, metadata, (uint32_t) METADATA_SIZE);
+    hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
 
-        hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
-
-        tcb_wait();
-    }
+    tcb_wait();
 
     // restore return address
     __asm__ volatile("mov    #0x500,   r6" "\n\t");
     __asm__ volatile("mov    @(r6),     r6" "\n\t");
 
     // postamble -- check LST, add all insts before "ret"
-    __asm__ volatile("incd  r1" "\n\t");
+    // __asm__ volatile("incd  r1" "\n\t");
     // __asm__ volatile("pop   r11" "\n\t");
     #endif
 
@@ -243,7 +245,7 @@ __attribute__ ((section (".do_mac.leave"))) __attribute__((naked)) void Hacl_HMA
   __asm__ volatile("ret" "\n\t");
 }
 
-// TCB WAIT
+/********** TCB WAIT ************/
 __attribute__ ((section (".tcb.wait"))) void tcb_wait(){
     uint8_t * response = (uint8_t*)(RESP_ADDR);
     uint8_t * key = (uint8_t*)(KEY_ADDR);
@@ -255,118 +257,130 @@ __attribute__ ((section (".tcb.wait"))) void tcb_wait(){
     uint8_t * recv_new_chal = (uint8_t*)(NEW_CHAL_ADDR);
     uint8_t * recv_auth = (uint8_t*)(VRF_AUTH);
     
+    // Initialize internal flags
+    uint8_t out = 0;
     uint8_t app = 10;
     uint8_t * buffer_8_to_16 = (uint8_t*)(TMP_16_BUFF);
 
-    unsigned int i;
-    
-    //// send H, METADATA, CFLog (2)
-    // H
-    sendBuffer(response, KEY_SIZE);
-    P3OUT++;
-    // metadata
-    sendBuffer(metadata, METADATA_SIZE);
-    P3OUT++;
-    // cflog
-    sendBuffer(cflog, *((uint16_t*)(CLOGP_ADDR))*2);      
-    
-    P3OUT++;
-    //// Receive app, chal', AER_min, AER_max, Auth to Prv (6)
-    // app
-    echo_rx_tx(&app, 1);
-
-    P3OUT++;
-    //chal'
-    echo_rx_tx(recv_new_chal, KEY_SIZE);
-
-    P3OUT++;
-    // AER_min
-    echo_rx_tx(buffer_8_to_16, 2);
-
-    *((uint16_t*)(ERMIN_ADDR)) = (buffer_8_to_16[0] << 8) | buffer_8_to_16[1];
-    P3OUT++;
-
-    // AER_max
-    echo_rx_tx(buffer_8_to_16, 2);
-
-    *((uint16_t*)(ERMAX_ADDR)) = (buffer_8_to_16[0] << 8) | (buffer_8_to_16[1]);
-
-    //auth
-    echo_rx_tx(recv_auth, KEY_SIZE);
-
-    P3OUT++;
-    // Authenticate & produce 'out'
-    uint8_t out = 0x00;
-    for(i=0; i<KEY_SIZE; i++){
-        if(recv_new_chal[i] > challenge[i]){
-            out = 0x01;
-            break;
-        } else if(recv_new_chal[i] < challenge[i]){
-            out = 0x00;
-            break;
+    while(out == 0){
+        uint8_t readyByte = 0;
+        uint8_t sendByte = ACK;
+        
+        while(readyByte != ACK){
+            sendBuffer(&sendByte, 1);
+            recvBuffer(&readyByte, 1);    
         }
-    }
-    P3OUT++;
-    // check auth token
-    uint8_t * auth =  (uint8_t*)(PRV_AUTH);
 
-    hmac(auth, key, (uint32_t) KEY_SIZE, recv_new_chal, (uint32_t) KEY_SIZE);
+        unsigned int i;
+        
+        //// send H, METADATA, CFLog (2)
+        // H
+        sendBuffer(response, KEY_SIZE);
+        P3OUT++;
+        // metadata
+        sendBuffer(metadata, METADATA_SIZE);
+        P3OUT++;
+        // cflog
+        sendBuffer(cflog, *((uint16_t*)(CLOGP_ADDR))*2);      
+        
+        P3OUT++;
+        //// Receive app, chal', AER_min, AER_max, Auth to Prv (6)
+        // app
+        echo_rx_tx(&app, 1);
 
-    buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) >> 8);
-    buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) & 0x00ff);
-    P3OUT++;
-    hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+        P3OUT++;
+        //chal'
+        echo_rx_tx(recv_new_chal, KEY_SIZE);
 
-    buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) >> 8);
-    buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) & 0x00ff);
-    P3OUT++;
-    hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+        P3OUT++;
+        // AER_min
+        echo_rx_tx(buffer_8_to_16, 2);
 
-    P3OUT++;
-    hmac(auth, auth, (uint32_t) KEY_SIZE, &app, (uint32_t) 1);
+        *((uint16_t*)(ERMIN_ADDR)) = (buffer_8_to_16[0] << 8) | buffer_8_to_16[1];
+        P3OUT++;
 
-    sendBuffer(auth, KEY_SIZE);
-    recvBuffer(auth, KEY_SIZE);
-    P3OUT++;
-    
-    out ^= secure_memcmp(auth, recv_auth, KEY_SIZE);
-    P3OUT++;
+        // AER_max
+        echo_rx_tx(buffer_8_to_16, 2);
 
-    sendBuffer(&out, 1);
-    recvBuffer(&out, 1);
-    P3OUT++;
-    if(out == 0){
-        // inauthentic vrf -- re-enter tcb_wait
-        P2OUT = 0x55;
-    } else {
-        P2OUT = 0x0f;
-        if(app == 1){
-            // vrf approved --> resume exec
-           P2OUT |= 0xf0;
+        *((uint16_t*)(ERMAX_ADDR)) = (buffer_8_to_16[0] << 8) | (buffer_8_to_16[1]);
+
+        //auth
+        echo_rx_tx(recv_auth, KEY_SIZE);
+
+        P3OUT++;
+        // Authenticate & produce 'out'
+        for(i=0; i<KEY_SIZE; i++){
+            if(recv_new_chal[i] > challenge[i]){
+                out = 1;
+                break;
+            } else if(recv_new_chal[i] < challenge[i]){
+                out = 0;
+                break;
+            }
+        }
+        P3OUT++;
+        // check auth token
+        uint8_t * auth =  (uint8_t*)(PRV_AUTH);
+
+        hmac(auth, key, (uint32_t) KEY_SIZE, recv_new_chal, (uint32_t) KEY_SIZE);
+
+        buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) >> 8);
+        buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) & 0x00ff);
+        P3OUT++;
+        hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+
+        buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) >> 8);
+        buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) & 0x00ff);
+        P3OUT++;
+        hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+
+        P3OUT++;
+        hmac(auth, auth, (uint32_t) KEY_SIZE, &app, (uint32_t) 1);
+
+        sendBuffer(auth, KEY_SIZE);
+        recvBuffer(auth, KEY_SIZE);
+        P3OUT++;
+        
+        out &= secure_memcmp(auth, recv_auth, KEY_SIZE);
+        P3OUT++;
+
+        sendBuffer(&out, 1);
+        recvBuffer(&out, 1);
+        P3OUT++;
+        if(out == 0){
+            // inauthentic vrf -- re-enter tcb_wait
+            P2OUT = 0x55;
         } else {
-            // vrf does not approve --> tcb_heal
-           P2OUT |= 0x50;
-           // "Shut Down"
-           _BIS_SR(CPUOFF);
+            P2OUT = 0x0f;
+            if(app == 1){
+                // vrf approved --> resume exec
+               P2OUT |= 0xf0;
+            } else {
+               /********** TCB HEAL ************/
+               P2OUT |= 0x50;
+               // "Shut Down"
+               _BIS_SR(CPUOFF);
 
-           // "Reset"
-           //((void(*)(void))(*(uint16_t*)(0xFFFE)))();
+               // "Reset"
+               //((void(*)(void))(*(uint16_t*)(0xFFFE)))();
+            }
         }
-    }
-    P3OUT++;
+        P3OUT++;
 
-    //DEBUG: print old chal on vrf side
-    sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
+        //DEBUG: print old chal on vrf side
+        sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
 
-    // Update challenge
-    my_memcpy((uint8_t * )(CHAL_BASE), (uint8_t * )(NEW_CHAL_ADDR), CHAL_SIZE);
+        // Update challenge
+        my_memcpy((uint8_t * )(CHAL_BASE), (uint8_t * )(NEW_CHAL_ADDR), CHAL_SIZE);
 
-    //DEBUG: print new chal on vrf side
-    sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
-    // recvBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
+        //DEBUG: print new chal on vrf side
+        sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
+        // recvBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
 
-    //DEBUG: print first 16 bytes of attested memory
-    sendBuffer((uint8_t * )(ATTEST_DATA_ADDR), 16);
+        //DEBUG: print first 16 bytes of attested memory
+        sendBuffer((uint8_t * )(ATTEST_DATA_ADDR), 16);
+    } // end while
+    
 }
 
 __attribute__ ((section (".tcb.leave"), naked)) void tcb_exit() {
@@ -395,15 +409,15 @@ __attribute__ ((section (".tcb.lib"))) void my_memcpy(uint8_t* dst, uint8_t* src
 }
 
 __attribute__ ((section (".tcb.lib"))) int secure_memcmp(const uint8_t* s1, const uint8_t* s2, int size) {
-    int res = 0;
+    int res = 1;
     int first = 1;
     for(int i = 0; i < size; i++) {
       if (first == 1 && s1[i] > s2[i]) {
-        res = 1;
+        res = 0;
         first = 0;
       }
       else if (first == 1 && s1[i] < s2[i]) {
-        res = 1;
+        res = 0;
         first = 0;
       }
     }

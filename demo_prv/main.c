@@ -1,3 +1,22 @@
+/**
+ * Adam Caulfield
+ * 
+ * Demo software for the Prover
+ * 
+ * main.c
+ * 
+ * Prv compares a buffer (which simulates user input) to constant password
+ * After receiving a correct password, Prv gathers six ultrasonic sensor readings
+ * 
+ * Since Prv software is vulnerable, an adversary can cause a buffer overflow to skip the password check
+ * and can gather the sensor readings without a correct password
+ * 
+ * To execute the benign version with a correct password, define user_input based on line 35 (and comment out line 38)
+ * 
+ * To execute the attack version with a incorrect password and buffer overflow, define user_input based on line 38 (and comment out line 35)
+ * 
+*/
+
 #include <stdio.h>
 #include "hardware.h"
 
@@ -11,7 +30,7 @@
 
 #define ULT_PIN         0x02
 #define MAX_DURATION    1000
-#define TOTAL_READINGS  8
+#define TOTAL_READINGS  6
 
 #define STACK_BASE      0x6800
 
@@ -35,10 +54,10 @@ char pass[4] = {'a', 'b', 'c', 'd'};
 char user_input[5] = {'a', 'b', 'c', 'd', '\r'};
 
 // Buffer overflow -- jump to 'grant access' when password is wrong
-// char user_input[user_bad_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, 0x68, TARGET_LOWER, '\r'};
+// char user_input[user_bad_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, TARGET_LOWER, TARGET_UPPER, '\r'};
 
 // Output data
-long ult_readings[8] = {0,0,0,0,0,0,0,0};
+long ult_readings[TOTAL_READINGS] = {0,0,0,0,0,0};
 
 
 //---------- Check "password" code (vulnerable to buffer-overflow) ----------//
@@ -47,16 +66,11 @@ char waitForPassword(){
 
     read_data(entry);
 
-    // int i = 0;
-    // for(; i<12; i++){
-    //     P1OUT = *((uint8_t*)(0x6800-i));
-    // }
-
     char total;
-    total = pass[0] & ~(user_input[0]);
-    total = pass[1] & ~(user_input[1]);
-    total = pass[2] & ~(user_input[2]);
-    total = pass[3] & ~(user_input[3]);
+    unsigned int i;
+    for(i=0; i<4; i++){
+        total &= (pass[i] & ~(user_input[i]));    
+    }
 
     return total;
 }
