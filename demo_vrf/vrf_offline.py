@@ -4,6 +4,7 @@ from utils import *
 import time
 from generate_cfg import *
 
+### Setup initiali challenge
 chal_size = 32
 challenge = get_init_challenge(chal_size)
 
@@ -13,6 +14,7 @@ challenge = b''.join(challenge)
 METADATA_SIZE = 6
 #####
 
+## Setup key
 key_size = 32
 
 key = [0,0,0,0,0,0,0,0,

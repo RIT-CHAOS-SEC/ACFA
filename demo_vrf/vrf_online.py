@@ -13,13 +13,14 @@ from verify import *
 ##### UART / SERIAL PORT CONFIGURATION
 
 ## Modify based on your machine & connection
-# dev = '/dev/ttyUSB1' ## ubuntu syntax
-dev = 'COM4'		 ## windows syntax
-
-## Do not modify
+dev = '/dev/ttyUSB1' ## ubuntu syntax
+# dev = 'COM4'		 ## windows syntax
+## BAUD Rate USB-UART
 baud = 9600
-tx_timeout = 0.0005
+## serial python objcet
+ser = serial.Serial(dev, baud, timeout=0.5)
 
+## Setup initiaal 
 chal_size = 32
 challenge = get_init_challenge(chal_size)
 
@@ -38,23 +39,14 @@ key = [0,0,0,0,0,0,0,0,
 key = [x.to_bytes(1,byteorder='big') for x in key]
 key = b''.join(key)
 
+## Start of AER. equals e000 if attesting PMEM
 aermin = b'\xe0\x00'
-aermax = b'\xe2\x46'
+## End of AER. equals addr of acfa_exit if attesting PMEM
+aermax = b'\xe2\x4a'
 
+## internal variables
 max_log_size = 256
-
-##### OFFLINE PHASE
-# pmem_size = 0x2000-1 # 8KB
-# pmem_size = 0x1000-1 # 4KB
-# pmem_size = 0x0800-1 # 2KB
-
-
-##### 
-
-
 sim_idx = 0
-
-ser = serial.Serial(dev, baud, timeout=0.5)
 report_num = 0
 last = 0
 
@@ -62,6 +54,7 @@ last = 0
 total_time = 0
 runtime_rounds = []
 
+## expected cflog start address
 cflog_start_addr = "0xe03e"
 
 print(" ")
