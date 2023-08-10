@@ -22,6 +22,16 @@
 
 `tcb` - contains all source and header files for ACFA software TCB.
 
+### Requirements / Recommended setup
+
+1- Xilinx Vivado (version 2021.1 or higher)
+
+2- Python 3.6.9 or higher
+
+3- We evaluated ACFA prototype on 64-bit Ubuntu 18.04 OS
+
+4- To evaluate end-to-end demo: Basys3 FPGA Development Board (https://digilent.com/reference/basys3/refmanual) 
+
 ### Setup
 
 1- Clone this Repository
@@ -30,7 +40,9 @@
 
 3- Install Xilinx Vivado: https://www.xilinx.com/support/download.html
 
-4- Install the folloing Python packages: serial, time, hmac, hashlib, argparse, pickle, dataclasses, os, collections
+4- Install pyserial python package using `sudo apt install python3-serial` 
+
+5- Verify required packages from standard distribution: `time, hmac, hashlib, argparse, pickle, dataclasses, os, collections`. 
 
 ### Create a Vivado Project for ACFA
 
