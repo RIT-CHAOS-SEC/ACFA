@@ -1,6 +1,6 @@
 # Repository for ACFA: Secure Runtime Auditing & Guaranteed Device Healing via Active Control Flow Attestation
 
-## Accepted to ([USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/presentation/caulfield))
+## Accepted to [USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/presentation/caulfield)
 ```
 @inproceedings {291156,
 author = {Adam Caulfield and Norrathep Rattanavipanon and Ivan De Oliveira Nunes},
