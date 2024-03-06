@@ -1,6 +1,21 @@
-# Repository for ACFA
+# Repository for ACFA: Secure Runtime Auditing & Guaranteed Device Healing via Active Control Flow Attestation
 
-## Paper - ACFA: Secure Runtime Auditing & Guaranteed Device Healing via Active Control Flow Attestation (https://arxiv.org/abs/2303.16282)
+## Accepted to ([USENIX Security '23]([https://link-url-here.org](https://www.usenix.org/conference/usenixsecurity23/presentation/caulfield)))
+```
+@inproceedings {291156,
+author = {Adam Caulfield and Norrathep Rattanavipanon and Ivan De Oliveira Nunes},
+title = {{ACFA}: Secure Runtime Auditing \& Guaranteed Device Healing via Active Control Flow Attestation},
+booktitle = {32nd USENIX Security Symposium (USENIX Security 23)},
+year = {2023},
+isbn = {978-1-939133-37-3},
+address = {Anaheim, CA},
+pages = {5827--5844},
+url = {https://www.usenix.org/conference/usenixsecurity23/presentation/caulfield},
+publisher = {USENIX Association},
+month = aug
+}
+```
+
 
 ### Description folders containing code and data
 
