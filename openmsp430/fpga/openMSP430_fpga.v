@@ -754,34 +754,118 @@ begin
     pc_d <= 16'hffff;
     rst_d <= 1'b0; 
     ctr <= 2'b00;
+    // trigger <= 1'b0;
+    // start <= 1'b0;
 end  
 
-always @(posedge (pc_buff != pc_out))
-begin
-    if(puc_rst)
-        ctr <= ctr + 2'b01;
-    
-    if(ctr == 2'b10)
-        rst_d <= 1'b1;
-    
-    if(~rst_d && pc_out != 16'h0000)
-    begin 
-        pc_d <= pc_buff;
-        pc_buff <= pc_out;
-    end       
-end 
+// reg t1 = 1'b0;
+// reg t2 = 1'b0;
+// reg t3 = 1'b0;
+
+// reg [15:0] read_idx = 16'h0;
+// reg counter = 0;
+// wire continue = (read_idx <= log_ptr_catch);
+// reg [15:0] log_ptr_catch = 16'h0;
+// always @(posedge (mclk))
+// begin
+//     begin
+//         t1 <= 1'b1;
+//         log_ptr_catch <= cflow_log_ptr;
+//     end
+
+//     if(flush)
+//     begin
+//         pc_d <= cflow_dest;      
+//         t2 <= 1'b1;
+//         log_ptr_catch <= cflow_log_ptr;
+//     end
+
+//     if (ER_done)
+//     begin
+//         t3 <= 1'b1;
+//         log_ptr_catch <= cflow_log_ptr;
+//     end
+// end 
+
+// reg start;
+// always @(posedge (mclk))
+// begin
+//     if (ER_done)
+//         start <= 1'b1;
+// end
+
+
+
+// reg [15:0] trigger_count = 16'h0;
+// always @(posedge (mclk))
+// begin
+//     if (start == 1'b1)
+//     begin
+//         if(trigger == 1'b1)
+//         begin
+//             if(counter == 1'b1)
+//             begin
+//                 read_idx <= read_idx + 16'h1;
+//                 counter <= 1'b0;
+//             end
+//             else if(counter == 1'b0)
+//                 counter <= 1'b1;
+//             trigger <= 1'b0;
+//         end
+
+//         // else if(trigger == 1'b0)
+//         // begin
+//         if (trigger_count != 16'hffff)
+//             trigger_count <= trigger_count + 1;
+//         else
+//         begin
+//             trigger_count <= 16'h0;
+//             trigger <= 1'b1;
+//         end
+//         // end
+//     end
+// end 
+
+// wire [7:0] byte_val = counter ? read_val[15:8] : read_val[7:0];
 
 my_7_seg_driver driver_7segment_0(
     .clock_100Mhz   (mclk), // 100 Mhz clock source on Basys 3 FPGA
-    .s0_src         (pc_d[15:12]),
-    .s1_src         (pc_d[11:8]),
-    .s2_src         (pc_d[7:4]), 
-    .s3_src         (pc_d[3:0]),
+    .s0_src         (cflow_log_ptr[15:12]),
+    .s1_src         (cflow_log_ptr[11:8]),
+    .s2_src         (cflow_log_ptr[7:4]), 
+    .s3_src         (cflow_log_ptr[3:0]),
     .reset          (), // reset 
     .anode          (anode), // anode signals of the 7-segment LED display
     .LED_out        (LED_out)// cathode patterns of the 7-segment LED display
 );
   
+wire trigger;
+wire [15:0] read_idx;
+wire continue;
+wire [7:0] byte_val;
+wire t1;
+wire t2;
+wire t3;
+controller uut (
+    /// inputs
+    .mclk       (mclk),
+    .cflow_log_ptr (cflow_log_ptr),
+    .read_val   (read_val),
+    .boot       (boot),
+    .flush      (flush),
+    .ER_done    (ER_done),
+
+    // outputs
+    .trigger (trigger),
+    .read_idx (read_idx),
+    .continue (continue),
+    .byte_val (byte_val),
+
+    .t1 (t1),
+    .t2 (t2),
+    .t3 (t3)
+);
+
 //
 // Simple full duplex UART (8N1 protocol)
 //----------------------------------------
@@ -797,6 +881,8 @@ omsp_uart #(.BASE_ADDR(15'h0080)) uart_0 (
     .uart_txd     (hw_uart_txd),   // UART Data Transmit (TXD)
     .ctrl_out     (ctrl_out),
     .stat_out     (stat_out),
+    .tx_triggered (tx_triggered),
+    .tx_done      (tx_done),
 
 // INPUTs
     .mclk         (mclk),          // Main system clock
@@ -808,7 +894,9 @@ omsp_uart #(.BASE_ADDR(15'h0080)) uart_0 (
     .smclk_en     (smclk_en),      // SMCLK enable (from CPU)
     .uart_rxd     (hw_uart_rxd),    // UART Data Receive (RXD)
     .irq_rx_acc  (irq_acc[11]),    // Interrupt request RX accepted
-    .irq_tx_acc  (irq_acc[6])    // Interrupt request TX accepted
+    .irq_tx_acc  (irq_acc[6]),    // Interrupt request TX accepted
+    .controller_en    (trigger & continue),
+    .cflog_val  (byte_val)
 );
 
 
@@ -816,14 +904,17 @@ omsp_uart #(.BASE_ADDR(15'h0080)) uart_0 (
 //-----------------------------------------------
 //wire [15:0] LOG_size; 
 `ifdef ACFA_EQUIPPED
+wire [15:0] read_val;
 acfa_memory acfa_memory_0 (
 
 // OUTPUTs
     .per_dout           (per_dout_acfa_memory), // Peripheral data output
     .ER_min             (ER_min),                          // VAPE ER_min
     .ER_max             (ER_max),                          // VAPE ER_max
+    .read_val           (read_val),
 
 // INPUTs
+    .read_idx           (read_idx),
     .mclk               (mclk),                           // Main system clock
     .per_addr           (per_addr),      // Peripheral address
     .per_din            (per_din),       // Peripheral data input
@@ -1047,14 +1138,14 @@ IBUF  SW0_PIN        (.O(p3_din[0]),                   .I(SW0));
 // LEDs (Port 1 outputs)
 //-----------------------
 wire [7:0] upper_LEDs; 
-assign upper_LEDs[0] = (ctrl_out[0] & ~p3_din[7] & ~p3_din[6]) | (stat_out[0] & p3_din[7] & ~p3_din[6]) | (p2_dout[7] & p3_din[6]);
-assign upper_LEDs[1] = (ctrl_out[1] & ~p3_din[7] & ~p3_din[6]) | (stat_out[1] & p3_din[7] & ~p3_din[6]) | (p2_dout[6] & p3_din[6]);
-assign upper_LEDs[2] = (ctrl_out[2] & ~p3_din[7] & ~p3_din[6]) | (stat_out[2] & p3_din[7] & ~p3_din[6]) | (p2_dout[5] & p3_din[6]);
-assign upper_LEDs[3] = (ctrl_out[3] & ~p3_din[7] & ~p3_din[6]) | (stat_out[3] & p3_din[7] & ~p3_din[6]) | (p2_dout[4] & p3_din[6]);
-assign upper_LEDs[4] = (ctrl_out[4] & ~p3_din[7] & ~p3_din[6]) | (stat_out[4] & p3_din[7] & ~p3_din[6]) | (p2_dout[3] & p3_din[6]);
-assign upper_LEDs[5] = (ctrl_out[5] & ~p3_din[7] & ~p3_din[6]) | (stat_out[5] & p3_din[7] & ~p3_din[6]) | (p2_dout[2] & p3_din[6]);
-assign upper_LEDs[6] = (ctrl_out[6] & ~p3_din[7] & ~p3_din[6]) | (stat_out[6] & p3_din[7] & ~p3_din[6]) | (p2_dout[1] & p3_din[6]);
-assign upper_LEDs[7] = ctr[1] | ctr[0];//(ctrl_out[7] & ~p3_din[7] & ~p3_din[6]) | (stat_out[7] & p3_din[7] & ~p3_din[6]) | (p2_dout[0] & p3_din[6]);
+assign upper_LEDs[0] = 1'b0;//(ctrl_out[0] & ~p3_din[7] & ~p3_din[6]) | (stat_out[0] & p3_din[7] & ~p3_din[6]) | (p2_dout[7] & p3_din[6]);
+assign upper_LEDs[1] = 1'b0;//(ctrl_out[1] & ~p3_din[7] & ~p3_din[6]) | (stat_out[1] & p3_din[7] & ~p3_din[6]) | (p2_dout[6] & p3_din[6]);
+assign upper_LEDs[2] = 1'b0;//(ctrl_out[2] & ~p3_din[7] & ~p3_din[6]) | (stat_out[2] & p3_din[7] & ~p3_din[6]) | (p2_dout[5] & p3_din[6]);
+assign upper_LEDs[3] = 1'b0;//(ctrl_out[3] & ~p3_din[7] & ~p3_din[6]) | (stat_out[3] & p3_din[7] & ~p3_din[6]) | (p2_dout[4] & p3_din[6]);
+assign upper_LEDs[4] = 1'b0;//(ctrl_out[4] & ~p3_din[7] & ~p3_din[6]) | (stat_out[4] & p3_din[7] & ~p3_din[6]) | (p2_dout[3] & p3_din[6]);
+assign upper_LEDs[5] = t3;//(ctrl_out[5] & ~p3_din[7] & ~p3_din[6]) | (stat_out[5] & p3_din[7] & ~p3_din[6]) | (p2_dout[2] & p3_din[6]);
+assign upper_LEDs[6] = t2;//(ctrl_out[6] & ~p3_din[7] & ~p3_din[6]) | (stat_out[6] & p3_din[7] & ~p3_din[6]) | (p2_dout[1] & p3_din[6]);
+assign upper_LEDs[7] = t1;//ctr[1] | ctr[0];//(ctrl_out[7] & ~p3_din[7] & ~p3_din[6]) | (stat_out[7] & p3_din[7] & ~p3_din[6]) | (p2_dout[0] & p3_din[6]);
 
 OBUF  LED15_PIN      (.I(upper_LEDs[7]),  .O(LED15));
 OBUF  LED14_PIN      (.I(upper_LEDs[6]),  .O(LED14)); 
@@ -1083,6 +1174,7 @@ IBUF  BTN2_PIN       (.O(p2_io_din[1]),                            .I(BTN2));
 IBUF  BTN1_PIN       (.O(),                            .I(BTN1));
 //IBUF  BTN0_PIN       (.O(p1_io_din[0]),                            .I(BTN0));
 IBUF  BTN0_PIN       (.O(),                            .I(BTN0));
+
 
 // Four-Sigit, Seven-Segment LED Display
 //---------------------------------------

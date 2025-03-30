@@ -52,9 +52,18 @@ long getUltrasonicReading(void){
     return duration;
 }
 
+int *id(int* p) {
+  return p;
+}
+
 // --------------------- Main ------------------//
 int main(void)
 {
+
+    // int x;
+    // int y;
+    // int *u = id(&x);  // main.3
+    // int *v = id(&y);  // main.4
 
     P1DIR = 0xff;  // Onboard LED                     
     P2DIR = 0x00;  // Port 2.0-2.7 = Ultrasonic Sensor on P2.2

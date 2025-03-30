@@ -11,6 +11,7 @@ module  branch_monitor (
     
     e_state,
     inst_so,
+    inst_type,
 
     branch_detect
 );
@@ -25,6 +26,7 @@ input           irq;
 input           gie;
 input   [3:0]   e_state;
 input   [7:0]   inst_so;
+input   [2:0]   inst_type;
 output          branch_detect;
 
 
@@ -44,6 +46,8 @@ end
 //////////////// BRANCH DETECTION /////////////////
 wire jmp_or_ret = (e_state == 4'b1100);
 wire call = (inst_so == 8'b00100000)  & (e_state == 4'b1010); // e_state = A
+
+wire ret = jmp_or_ret & (inst_type == 3'h4);
 
 always @(posedge clk)
 if(irq && gie) // Wait --> Pend 

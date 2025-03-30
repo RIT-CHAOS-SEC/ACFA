@@ -26,6 +26,7 @@ module acfa (
     
     e_state,
     inst_so,
+    inst_type,
     
     cflow_hw_wen,
     cflow_log_ptr,
@@ -55,6 +56,7 @@ input           irq;
 input           gie;
 input   [3:0]   e_state;
 input   [7:0]   inst_so;
+input   [2:0]   inst_type;
 //input           jmp;
 //input           call;
 //
@@ -98,6 +100,7 @@ cflow_0 (
 
     .e_state    (e_state),
     .inst_so    (inst_so),
+    .inst_type      (inst_type),
     
     .cflow_hw_wen (cflow_hw_wen),
     .cflow_log_ptr (cflow_log_ptr),

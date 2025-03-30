@@ -51,12 +51,12 @@ long getUltrasonicReading(void);
 char pass[4] = {'a', 'b', 'c', 'd'};
 
 // Simulate non-attack input
-// char user_input[5] = {'a', 'b', 'c', 'd', '\r'};
+char user_input[5] = {'a', 'b', 'c', 'd', '\r'};
 
 // Simulate Buffer overflow attack
 // Since the code waits for '\r', the return address can be overwritten to skip the password check
 // This input includes an incorrect password jump to 'grant access' after the return from waitForPassword
-char user_input[attack_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, TARGET_LOWER, TARGET_UPPER, '\r'};
+// char user_input[attack_size] = {0x01, 0x02, 0x03, 0x04, 0x00, 0x04, TARGET_LOWER, TARGET_UPPER, '\r'};
 
 // Output data
 long ult_readings[TOTAL_READINGS] = {0,0,0,0,0,0};

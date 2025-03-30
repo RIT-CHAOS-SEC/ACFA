@@ -39,6 +39,7 @@ module cflow (
     
     e_state,
     inst_so,
+    inst_type,
     
     cflow_hw_wen,
     cflow_log_ptr,
@@ -66,6 +67,7 @@ input           irq;
 input           gie;
 input   [3:0]   e_state;
 input   [7:0]   inst_so;
+input   [2:0]   inst_type;
 
 // 
 output          cflow_hw_wen;
@@ -78,7 +80,7 @@ output          flush;
 output          boot;
 output          ER_done;
 
-parameter LOG_SIZE = 16'h0080; // # of 2-byte words
+parameter LOG_SIZE = 16'h0100; // # of 2-byte words
 parameter TCB_max = 16'hdffe; 
 parameter RESET_addr = 16'he000;
 parameter PMEM_min = 16'he03e;
@@ -141,6 +143,7 @@ branch_monitor_0( //Branch Monitor
 
     .e_state    (e_state),
     .inst_so    (inst_so),
+    .inst_type  (inst_type),
     
     .branch_detect (branch_detect)
 );
