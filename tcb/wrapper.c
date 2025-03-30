@@ -179,8 +179,8 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
     __asm__ volatile("pop   r5" "\n\t");
     #endif
 
-    // #if IS_SIM == SIM
-    // tcb_attest();
+    #if IS_SIM == SIM
+    tcb_attest();
 
     *((uint16_t*)(ERMIN_ADDR)) = ER_MIN;
     P1OUT = *((uint8_t*)(ERMIN_ADDR));
@@ -188,7 +188,7 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
     *((uint16_t*)(ERMAX_ADDR)) = ER_MAX;
     P1OUT = *((uint8_t*)(ERMAX_ADDR));
     P1OUT = *((uint8_t*)(ERMAX_ADDR+1));
-    // #endif
+    #endif
 
     // Resume Timer on exit
     TACTL |= MC_1; 
@@ -225,7 +225,7 @@ __attribute__ ((section (".tcb.attest"))) void tcb_attest()
 
     hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
 
-    // tcb_wait();
+    tcb_wait();
 
     // restore return address
     __asm__ volatile("mov    #0x500,   r6" "\n\t");

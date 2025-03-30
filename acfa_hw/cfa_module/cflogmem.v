@@ -4,7 +4,7 @@ module cflogmem (
 
 // OUTPUTs
     ram_dout,                      // RAM data output
-    read_val,
+
 
 // INPUTs
     read_addr,                      // RAM address
@@ -25,7 +25,6 @@ parameter ADDR_MSB   =  7;         // MSB of the address bus
 // OUTPUTs
 //============
 output      [15:0] ram_dout;       // RAM data output
-output      [15:0] read_val;       // RAM data output
 
 // INPUTs
 //============
@@ -79,7 +78,5 @@ assign ram_dout = mem_val;
 `else 
 assign ram_dout = cflog[read_addr] & {16{~ram_cen}};
 `endif
-
-assign read_val = cflog[read_addr];
 
 endmodule // cflogmem

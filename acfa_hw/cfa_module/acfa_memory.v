@@ -5,11 +5,9 @@ module  acfa_memory (
     per_dout,                       // Peripheral data output
     ER_min,                          // VAPE ER_min
     ER_max,                          // VAPE ER_max
-    read_val,
 //    LOG_size,                  // Max log size
 
 // INPUTs
-    read_idx,       
     mclk,                           // Main system clock
     per_addr,                       // Peripheral address
     per_din,                        // Peripheral data input
@@ -24,7 +22,6 @@ module  acfa_memory (
 
 // OUTPUTs
 //=========
-output      [15:0] read_val;
 output      [15:0] per_dout;        // Peripheral data output
 output      [15:0] ER_min;                          // VAPE ER_min
 output      [15:0] ER_max;                          // VAPE ER_max
@@ -32,7 +29,6 @@ output      [15:0] ER_max;                          // VAPE ER_max
 
 // INPUTs
 //=========
-input       [15:0] read_idx;
 input              mclk;            // Main system clock
 input       [13:0] per_addr;        // Peripheral address
 input       [15:0] per_din;         // Peripheral data input
@@ -163,10 +159,7 @@ challenges (
 
     // OUTPUTs
     .ram_dout    (chal_dout),           // Program Memory data output
-    .read_val    (),
-
     // INPUTs
-    .read_addr   (),
     .ram_addr    (chal_addr_reg),       // Program Memory address
     .ram_cen     (~chal_cen),           // Program Memory chip enable (low active)
     .ram_clk     (mclk),                // Program Memory clock
@@ -178,7 +171,7 @@ wire [15:0]           chal_rd = chal_dout & {16{chal_cen & ~|per_we}};
 // Control-Flow Logs Registers
 //------------------------------  
 parameter               CFLOW_LOGS_ADDR_MSB   =   7;
-parameter               CFLOW_LOGS_SIZE   =  16'h0100;     // # of 16-byte words
+parameter               CFLOW_LOGS_SIZE   =  16'h0080;     // # of 16-byte words
                                                           
 parameter       [14:0] CFLOW_LOGS_BASE_ADDR = 14'h01b0;//METADATA_BASE_ADDR+METADATA_SIZE;    // Spans 0x1a6-0x3a6
 parameter       [13:0] CFLOW_LOGS_PER_ADDR  = CFLOW_LOGS_BASE_ADDR[14:1];
@@ -193,9 +186,8 @@ wire    [15:0]                      cflow_dout;
 cflogmem cflog (
     // OUTPUTs
     .ram_dout    (cflow_dout),           // Program Memory data output
-    .read_val    (read_val),
     // INPUTs
-    .read_addr     (read_idx),       // Program Memory address
+    .read_addr     (cflow_addr_reg),       // Program Memory address
     .write_addr    (cflow_logs_ptr_din-16'h2),       // Program Memory address
     .ram_cen     (~cflow_cen),           // Program Memory chip enable (low active)
     .ram_clk     (mclk),                // Program Memory clock
@@ -207,48 +199,13 @@ cflogmem cflog (
     
 wire [15:0]           cflow_rd       = cflow_dout & {16{cflow_cen & ~|per_we}};
 
-// // MAC Register
-// //----------------- 
-// // Register base address (must be aligned to decoder bit width)
-// parameter       [14:0] BASE_ADDR   = 15'h0180; 
- 
-// parameter              MAC_SIZE  =  32;            // 32 bytes              
-// parameter              MAC_ADDR_MSB   = 3;         // Address stored in 16-bit registers, address 32*8 bits using 16-bit registers, need 4 bits -> 3 MSB (start from 0)    
- 
-// parameter       [14:0] MAC_BASE_ADDR = BASE_ADDR;              // 0x180 
-   
-// parameter       [13:0] MAC_PER_ADDR  = MAC_BASE_ADDR[14:1];   
-
-// wire   [MAC_ADDR_MSB:0] mac_addr_reg = per_addr-MAC_PER_ADDR; 
-// wire                     mac_cen      = per_en & per_addr >= MAC_PER_ADDR & per_addr < MAC_PER_ADDR+(MAC_SIZE*8/16);
-// wire    [15:0]           mac_dout;
-// wire    [1:0]            mac_wen      = per_we & {2{per_en}};
-
-// chalmem #(MAC_ADDR_MSB, MAC_SIZE)
-// mac (  
-
-//     // OUTPUTs
-//     .ram_dout    (mac_dout),           // Program Memory data output
-//     .read_val    (),
-
-//     // INPUTs
-//     .read_addr   (),
-//     .ram_addr    (mac_addr_reg),       // Program Memory address
-//     .ram_cen     (~mac_cen),           // Program Memory chip enable (low active)
-//     .ram_clk     (mclk),                // Program Memory clock
-//     .ram_din     (per_din),             // Program Memory data input
-//     .ram_wen     (~mac_wen)            // Program Memory write enable (low active)
-// );
-// wire [15:0]           mac_rd = mac_dout & {16{mac_cen & ~|per_we}};
-
-
-//// initialize stuff
 initial begin
     ermin <= 16'haa11; 
     ermax <= 16'habcd;
     cflow_logs_ptr <= 16'h0000;
 //    logsize <= 16'h0000; 
 end
+    
  
 //============================================================================
 // 4) DATA OUTPUT GENERATION
@@ -264,10 +221,8 @@ wire [15:0] per_dout  =  ermin_rd  |
                          cflow_logs_ptr_rd |
                          chal_rd |
                          cflow_rd;
-                          // |;
-                         // mac_rd;
                          
 wire [15:0] ER_min = ermin;
 wire [15:0] ER_max = ermax;
-
+ 
 endmodule 

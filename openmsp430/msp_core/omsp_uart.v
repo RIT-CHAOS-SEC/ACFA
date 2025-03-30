@@ -50,8 +50,7 @@ module  omsp_uart (
     uart_txd,                       // UART Data Transmit (TXD)
     ctrl_out,
     stat_out,
-    tx_done,
-    tx_triggered,
+    
 
 // INPUTs
     mclk,                           // Main system clock
@@ -62,10 +61,9 @@ module  omsp_uart (
     puc_rst,                        // Main system reset
     smclk_en,                       // SMCLK enable (from CPU)
     uart_rxd,                        // UART Data Receive (RXD)
+
     irq_rx_acc,    // Interrupt request RX accepted
-    irq_tx_acc,    // Interrupt request TX accepted
-    controller_en,
-    cflog_val
+    irq_tx_acc    // Interrupt request TX accepted
 );
 
 // OUTPUTs
@@ -76,8 +74,7 @@ output      [15:0] per_dout;        // Peripheral data output
 output             uart_txd;        // UART Data Transmit (TXD)
 output      [7:0] ctrl_out;        // UART_CTL
 output      [7:0] stat_out;         // UART_STAT
-output      tx_done;
-output      tx_triggered;
+
 
 // INPUTs
 //=========
@@ -89,11 +86,9 @@ input        [1:0] per_we;          // Peripheral write enable (high active)
 input              puc_rst;         // Main system reset
 input              smclk_en;        // SMCLK enable (from CPU)
 input              uart_rxd;        // UART Data Receive (RXD)
+
 input              irq_rx_acc;        
 input              irq_tx_acc;     
-//
-input              controller_en;
-input       [7:0] cflog_val;
 
 //=============================================================================
 // 1)  PARAMETER DECLARATION
@@ -175,8 +170,8 @@ wire       ctrl_ien_tx_empty = ctrl[7];
 wire       ctrl_ien_tx       = ctrl[6];
 wire       ctrl_ien_rx_ovflw = ctrl[5];
 wire       ctrl_ien_rx       = ctrl[4];
-wire       ctrl_smclk_sel    = ctrl[1]; //1; // use 1 for sim
-wire       ctrl_en           = 1;//ctrl[0]; //1; // use 1 for sim
+wire       ctrl_smclk_sel    = ctrl[1];
+wire       ctrl_en           = ctrl[0];
 
 assign ctrl_out = ctrl;
 
@@ -250,7 +245,7 @@ always @ (posedge mclk or posedge puc_rst)
   if (puc_rst)         baud_hi <=  8'h00;
   else if (baud_hi_wr) baud_hi <=  baud_hi_nxt;
 
-    
+
 wire [15:0] baudrate = {baud_hi, baud_lo};
 
 
@@ -258,14 +253,12 @@ wire [15:0] baudrate = {baud_hi, baud_lo};
 //-----------------
 reg  [7:0] data_tx;
 
-wire       data_tx_wr  = controller_en;//DATA_TX[0] ? reg_hi_wr[DATA_TX] : reg_lo_wr[DATA_TX];
+wire       data_tx_wr  = DATA_TX[0] ? reg_hi_wr[DATA_TX] : reg_lo_wr[DATA_TX];
 wire [7:0] data_tx_nxt = DATA_TX[0] ? per_din[15:8]      : per_din[7:0];
-
-
 
 always @ (posedge mclk or posedge puc_rst)
   if (puc_rst)         data_tx <=  8'h00;
-  else if (data_tx_wr) data_tx <=  cflog_val;//data_tx_nxt;
+  else if (data_tx_wr) data_tx <=  data_tx_nxt;
 
 
 // DATA_RX Register
@@ -415,9 +408,6 @@ assign  status_rx_busy          = (rxfer_bit!=4'h0);
 
 // TX Transfer start detection
 //-----------------------------
-assign tx_triggered = txfer_triggered;
-assign tx_done = txfer_done_dly;
-
 reg        txfer_triggered;
 wire       txfer_start;
 

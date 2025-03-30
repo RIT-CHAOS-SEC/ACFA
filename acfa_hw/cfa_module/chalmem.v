@@ -40,11 +40,10 @@ module chalmem (
 
 // OUTPUTs
     ram_dout,                      // RAM data output
-    read_val,
+
 
 // INPUTs
-    read_addr,                     // read address // specified via hardwars
-    ram_addr,                      // RAM address // specified via software
+    ram_addr,                      // RAM address
     ram_cen,                       // RAM chip enable (low active)
     ram_clk,                       // RAM clock
     ram_din,                       // RAM data input
@@ -60,11 +59,9 @@ parameter MEM_SIZE   =  256;       // Memory size in bytes
 // OUTPUTs
 //============
 output      [15:0] ram_dout;       // RAM data output
-output      [15:0] read_val;
 
 // INPUTs
 //============
-input       [15:0] read_addr;
 input [ADDR_MSB:0] ram_addr;       // RAM address
 input              ram_cen;        // RAM chip enable (low active)  
 input              ram_clk;        // RAM clock
@@ -113,6 +110,5 @@ always @(posedge ram_clk)
 // assign ram_dout = mem_val;
 assign ram_dout = mem[ram_addr_reg];
  
-assign read_val = mem[read_addr];
 
 endmodule // chalmem

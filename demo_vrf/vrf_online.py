@@ -13,8 +13,8 @@ from verify import *
 ##### UART / SERIAL PORT CONFIGURATION
 
 ## Modify based on your machine & connection
-# dev = '/dev/ttyUSB1' ## ubuntu syntax
-dev = 'COM4'		 ## windows syntax
+dev = '/dev/ttyUSB1' ## ubuntu syntax
+# dev = 'COM4'		 ## windows syntax
 ## BAUD Rate USB-UART
 baud = 9600
 ## serial python objcet
