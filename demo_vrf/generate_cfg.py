@@ -1,9 +1,9 @@
 from structures import *
 from utils import *
 from parse_asm import *
-
+import time
 import argparse
-import pickle
+
 
 def arg_parser():
     '''
@@ -23,19 +23,67 @@ def arg_parser():
     return args
 
 def main():
+    start = time.time()
     args = arg_parser()
-
-    # Parse asm file to python object
-    lines = read_file(args.asmfile)
 
     # Set arch if provided
     arch = set_arch(args.arch)
 
+    # Parse asm file to python object
+    lines = read_file(args.asmfile, arch.type)
+
+    asm_func_file = args.cfgfile.replace("cfg", "asm_func")
+
     # Create the CFG from the asm file
-    cfg = create_cfg(arch, lines)
+    cfg, asm_funcs = create_cfg(arch, lines)
+    print(f"CFG TYPE : {type(cfg)}")
+
+    stop = time.time()
+    timingFile = open("./logs/timing.log", "w")
+    print(f"\tBuild CFG: {1000*(stop-start)} ms", file=timingFile)
+    timingFile.close()
+    dataFile = open("./logs/timingdata.log", "a")
+    dataFile.write(f'\n{1000*(stop-start)}, ')
+    dataFile.close()
+
+    debugFile = open("./logs/debug.log", "w")
+    print("Nodes", file=debugFile)
+    print("-------------------", file=debugFile)
+    
+    for node in cfg.nodes.keys():
+        cfg.nodes[node].printNode(debugFile)
+        print("", file=debugFile)
+    print("-------------------", file=debugFile)
+    print(f"Total Indr Calls: {len(cfg.indr_calls)}")
+    
+    if len(cfg.indr_calls) > 0:
+        print("Indirect Calls:", file=debugFile)
+        for addr in cfg.indr_calls:
+            cfg.nodes[addr].printNode(debugFile)
+        print("-------------------", file=debugFile)
+        print("", file=debugFile)
+
+    print(f"Total Indr Jumps: {len(cfg.indr_jumps)}")
+    if len(cfg.indr_jumps) > 0:
+        print("Indirect Jumps:", file=debugFile)
+        for addr in cfg.indr_jumps:
+            cfg.nodes[addr].printNode(debugFile)
+        print("-------------------", file=debugFile)
+        print("", file=debugFile)
+    
+    
+    if len(cfg.func_nodes.keys()) > 0:
+        print(f"Func nodes: {len(cfg.func_nodes.keys())}")
+        for key in cfg.func_nodes.keys():
+            print(f"{key}: {cfg.func_nodes[addr]}")
+        print("-------------------", file=debugFile)
+        print("", file=debugFile)
+    debugFile.close()
 
     # Serialize cfg to output file
+    print(f"CFG TYPE : {type(cfg)}")
     dump(cfg,args.cfgfile)
+    dump(asm_funcs,asm_func_file)
 
 if __name__ == "__main__":
     main()

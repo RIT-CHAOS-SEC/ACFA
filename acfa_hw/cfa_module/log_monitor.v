@@ -85,11 +85,11 @@ if (state == EXEC && (log_full || reset))
     flush_log <= 1'b1;
 else if (state == ABORT && !reset && !log_full)
     flush_log <= 1'b0;
-else if (attest_pend) //Pend --> Acc
+else if (attest_pend)
     flush_log <= 0;
 
 always @(posedge clk)
-if(log_full && irq) // Abort --> Pend
+if(log_full && irq)
     attest_pend <= 1;
 else
     attest_pend <= 0;
@@ -98,6 +98,8 @@ assign flush = flush_log;
 
 wire pc_in_ER = (pc >= ER_min) && (pc <= ER_max);
 wire not_pc_in_ER = ~pc_in_ER;
+wire overflow = branch_detect & flush_log;
+
 always @(posedge clk)
 begin
     begin
@@ -146,34 +148,23 @@ wire entering_TCB = pc_out_TCB && pc_next_in_TCB;
 
 always @(posedge clk)
 begin
-//    if(entering_ER)
-//        wr_en <= 1'b1;
-//    else 
-    if(pc_state == notX && entering_ER && branch_detect && ~log_full)
+    if(pc_state == notX && entering_ER && branch_detect && ~(log_ptr_reg >= LOG_SIZE))
         wr_en <= 1'b1;
-    else if(entering_TCB && branch_detect) //notX
+    else if((pc_state == inX || pc_state == Wait) && branch_detect && ~(log_ptr_reg >= LOG_SIZE))
         wr_en <= 1'b1;
-    // else if(pc_in_TCB)
-    //      wr_en <= 1'b0; 
-    else if((pc_state == inX || pc_state == Wait) && branch_detect && ~log_full)
-        wr_en <= 1'b1;
-    else //if(pc_state == Wait or notX) 
+    else
         wr_en <= 1'b0;
 end
 
 always @(posedge clk)
 begin
-    if(pc_state == notX && entering_ER && branch_detect && ~log_full)
+    if(pc_state == notX && entering_ER && branch_detect && ~(log_ptr_reg >= LOG_SIZE))
         log_ptr_reg <= log_ptr_reg+16'b10;
-    else if(entering_TCB && branch_detect) //notX
-        log_ptr_reg <= log_ptr_reg+16'b10;
-    // else if(pc_in_TCB)
-        // log_ptr_reg <= log_ptr_reg; 
-    else if((pc_state == inX || pc_state == Wait) && branch_detect && ~log_full && ~loop_detect)
+    else if((pc_state == inX || pc_state == Wait) && branch_detect && ~(log_ptr_reg >= LOG_SIZE) && ~loop_detect)
         log_ptr_reg <= log_ptr_reg+16'b10;
     else if(pc == TCB_max)
         log_ptr_reg <= 16'b0;
-    else //if(pc_state == Wait) 
+    else 
         log_ptr_reg <= log_ptr_reg;
 end
 

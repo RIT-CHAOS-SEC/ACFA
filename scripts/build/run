@@ -18,6 +18,15 @@ cfolder=$folder/$1/
 verfile=$cfolder"/simulation/sim.v"
 submitfile="./build/submit.f"
 incfile="../openmsp430/msp_core/openMSP430_defines.v"
+
+## get log_dir and fill in the simulation file
+# for windows + wsl
+log_dir=$(pwd | sed 's|/mnt/c|C:|' | sed 's|scripts|logs|g')
+# for linux
+# log_dir=$(pwd | sed 's|scripts|logs|g')
+echo "LOGS DIRECTORY = "${log_dir}""
+# sed 's|<LOGS_FULL_PATH>|'${log_dir}'|g' ../openmsp430/simulation/tb_openMSP430_fpga_template.v > ../openmsp430/simulation/tb_openMSP430_fpga.v
+
 ./build/acfasim $cfolder $2
 
 # rm -rf $folder

@@ -1037,8 +1037,7 @@ pmem_0 (
 IBUF  SW7_PIN        (.O(p3_din[7]),                   .I(SW7));
 IBUF  SW6_PIN        (.O(p3_din[6]),                   .I(SW6));
 IBUF  SW5_PIN        (.O(p3_din[5]),                   .I(SW5));
-//IBUF  SW4_PIN        (.O(p3_din[4]),                   .I(SW4));
-//IBUF  SW4_PIN        (.O(1'b1),                   .I(SW4));
+IBUF  SW4_PIN        (.O(p3_din[4]),                   .I(SW4));
 IBUF  SW3_PIN        (.O(p3_din[3]),                   .I(SW3));
 IBUF  SW2_PIN        (.O(p3_din[2]),                   .I(SW2));
 IBUF  SW1_PIN        (.O(p3_din[1]),                   .I(SW1));

@@ -2,7 +2,7 @@ from architectures import *
 from os.path import exists
 import pickle
 
-def read_file(file):
+def read_file(file, arch_type=None):
     '''
     This function receive the .s file name and read its lines.
     Return : 
@@ -17,7 +17,8 @@ def read_file(file):
     lines = [x.replace('\n','') for x in lines if x != '\n']
 
     # ARM: Get rid of "nop" and ".word" lines
-    lines = [x for x in lines if ("nop" not in x) and (".word" not in x)]
+    if arch_type == 'armv8-m33':
+        lines = [x for x in lines if ("nop" not in x) and (".word" not in x)]
 
     return lines
 
@@ -29,50 +30,50 @@ def set_arch(arch):
     else: 
         return None
 
-def load(filename):
-    f = open(filename,'rb')
-    obj = pickle.load(f)
-    f.close()
-    return obj
-
 def dump(obj, filename):
     filename = open(filename, 'wb')
     pickle.dump(obj, filename)
     filename.close()
 
+def load(filename):
+    f = open(filename,'rb')
+    obj = pickle.load(f)
+    print(f"loaded {type(obj)} from {filename}")
+    f.close()
+    return obj
+
+def clean_comment(arch, comment):
+    """
+    This function attempts to extract a memory address from a given comment.
+    """
+    if arch.type == 'elf32-msp430':
+        if comment is None:
+            return comment
+        comment = comment.split(' ')
+        for c in comment:
+            if '0x' in c:
+                return c.strip('ghijklmnopqrstuvwyz!@#$%^&*(),<>/?.')
+    # 
+    elif arch.type == 'armv8-m33':
+        if comment is None:
+            return comment
+        # comment = comment.split(' ')
+        print("comment: "+str(comment))
+
+def set_cfg_head(cfg, start_addr, end_addr=None):
+    try: 
+        cfg.head = cfg.nodes[start_addr]
+    except KeyError as err:
+        print(bcolors.RED + f'[!] Error: Start address ({start_addr}) to verify from is not a valid node' + bcolors.END)
+        exit(1)
+    return cfg
+
+def conditional_print(str, file=None, flag=True):
+    if flag:
+        print(str, file=file)
 
 def get_init_challenge(chal_size):
     challenge = []
     for i in range(0, chal_size):
         challenge.append(0)
     return challenge
-
-def get_next_challenge(prev_chal, chal_size, report_num):
-    if report_num == 0:
-        new_chal = []
-        for i in range(0, chal_size):
-            new_chal.append((65+i).to_bytes(1,byteorder='big'))
-        new_chal = b''.join(new_chal)
-        return new_chal
-    else:
-        new_chal = (prev_chal[0]+1).to_bytes(1,byteorder='big')+prev_chal[1:]
-        return new_chal
-
-def swap_endianess(a):
-    if type(a) == type(b'\x00'):
-        i = 0
-        swp = []
-        while i < len(a):
-            swp.append(a[i+1].to_bytes(1,byteorder='big'))
-            swp.append(a[i].to_bytes(1,byteorder='big'))
-            i += 2
-        return b''.join(swp)
-
-    if type(a) == type([]):
-        i = 0
-        while i < len(a):
-            tmp = a[i]
-            a[i] = a[i+1]
-            a[i+1] = tmp
-            i += 2
-        return a

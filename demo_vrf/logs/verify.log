@@ -1,0 +1,10 @@
+ 
+Current node
+start_addr: 0xe03e
+end_addr: 0xe044
+successors: ['0xe1fc']
+parents: ['0xe028', '0xe030']
+type: call
+adj_instr: 0xe048
+log_idx: 0
+log_node.dest_addr: 0xe266

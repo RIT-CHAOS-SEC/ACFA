@@ -4,7 +4,7 @@ install:
 demo :
 	rm -f ../logs/*.cflog
 	sed -i 's/#define IS_SIM  SIM/#define IS_SIM  NOT_SIM/g' ../tcb/wrapper.c 
-	sh build/run "demo_prv" true
+	sh build/run "demo_prv" false
 
 demo_sim:
 	rm -f ../logs/*.cflog
@@ -28,5 +28,11 @@ syringe_pump:
 	rm -f ../logs/*.cflog
 	sh build/run "syringe_pump" true
 
+beebs:
+	cp ../beebs/tests/${BEEBS}.c ../beebs/main.c
+	sh build/run "beebs" true
+	rm ../beebs/main.c
+
 clean :
 	rm -rf simv *.mem pmem.inc stimulus.v tmp-build
+	rm -f ../logs/*.cflog

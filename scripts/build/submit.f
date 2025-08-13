@@ -33,23 +33,17 @@
 // $LastChangedDate$
 //=============================================================================
 
-//=============================================================================
-// Testbench related
-//=============================================================================
+//==========
+// ACFA
+//==========
++incdir+../acfa_hw
+../acfa_hw/acfa.v
 
-+incdir+../openmsp430/simulation/
-../openmsp430/simulation/tb_openMSP430.v
-../openmsp430/simulation/io_cell.v
-../openmsp430/simulation/msp_debug.v
-
-+incdir+../openmsp430/msp_memory/
-../openmsp430/msp_memory/ram.v
-../openmsp430/msp_memory/rom.v
-../openmsp430/msp_memory/keyrom.v
-../openmsp430/msp_memory/pmem.v
-
-+incdir+../vrased/hw-mod/
-../vrased/hw-mod/hwmod.v
+//==========
+// FPGA
+//==========
++incdir+../openmsp430/fpga/
+../openmsp430/fpga/openMSP430_fpga.v
 
 //=============================================================================
 // CPU
@@ -79,7 +73,6 @@
 ../openmsp430/msp_core/omsp_clock_gate.v
 ../openmsp430/msp_core/omsp_clock_mux.v
 
-
 //=============================================================================
 // Peripherals
 //=============================================================================
@@ -90,3 +83,18 @@
 //../../../rtl/verilog/periph/omsp_uart.v
 ../openmsp430/msp_periph/template_periph_8b.v
 ../openmsp430/msp_periph/template_periph_16b.v
+
+//=============================================================================
+// Testbench related
+//=============================================================================
+
++incdir+../openmsp430/simulation/
+../openmsp430/simulation/tb_openMSP430_fpga.v
+../openmsp430/simulation/io_cell.v
+../openmsp430/simulation/msp_debug.v
+
++incdir+../openmsp430/msp_memory/
+../openmsp430/msp_memory/ram.v
+../openmsp430/msp_memory/rom.v
+../openmsp430/msp_memory/keyrom.v
+../openmsp430/msp_memory/pmem.v

@@ -29,13 +29,15 @@
 #define ERMAX_ADDR      ERMIN_ADDR+2  //1a2-3
 #define CLOGP_ADDR      ERMAX_ADDR+2  //1a4-5
 #define METADATA_SIZE   6
+#define RESP_ADDR       0x1a6
 
 // CFLog
-#define LOG_BASE        0x1b0 //CHAL_BASE + CHAL_SIZE + METADATA_SIZE+4 //0x1a6
+#define LOG_BASE        0x1d0 //CHAL_BASE + CHAL_SIZE + METADATA_SIZE+4 //0x1a6
 #define LOG_SIZE        256 // in bytes
 // #define LOG_SIZE        512 
 // #define LOG_SIZE        1024
 // #define LOG_SIZE        2048
+#define VRF_AUTH        LOG_BASE + 0x100
 
 // Set ER_MIN/MAX based on setting
 #define PMEM_MIN  0xE000
@@ -64,11 +66,9 @@
 #define NEW_CHAL_ADDR         0xba4
 #define TMP_16_BUFF           0xbc4
 #define LOG_BASE_XS   0xca6
-#define RESP_ADDR 0xb00
 #define KEY_ALT_ADDR 0xb20
 #define CHAL_XS 0xb40
 #define PRV_AUTH 0xb60
-#define VRF_AUTH 0xb80
 
 // TCB version // AUTOMATED: Do not edit
 #define NOT_SIM   0
@@ -98,6 +98,8 @@ extern void hmac(uint8_t *mac, uint8_t *key, uint32_t keylen, uint8_t *data, uin
 #define hmac my_hmac
 void my_hmac(uint8_t *mac, uint8_t *key, uint32_t keylen, uint8_t *data, uint32_t datalen);
 #endif
+
+int boot = 0;
 
 /**********  CORE TCB    *********/
 #pragma vector=FLUSH_VECTOR
@@ -145,7 +147,7 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
 
     // Init UART
     UART_BAUD = BAUD;                   
-    UART_CTL  = UART_EN;
+    UART_CTL  = UART_EN; 
 
     P3DIR |= 0xff;
 
@@ -179,8 +181,8 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
     __asm__ volatile("pop   r5" "\n\t");
     #endif
 
-    #if IS_SIM == SIM
-    tcb_attest();
+    // #if IS_SIM == SIM
+    // tcb_attest();
 
     *((uint16_t*)(ERMIN_ADDR)) = ER_MIN;
     P1OUT = *((uint8_t*)(ERMIN_ADDR));
@@ -188,7 +190,7 @@ __attribute__ ((section (".tcb.body"))) void tcb() {
     *((uint16_t*)(ERMAX_ADDR)) = ER_MAX;
     P1OUT = *((uint8_t*)(ERMAX_ADDR));
     P1OUT = *((uint8_t*)(ERMAX_ADDR+1));
-    #endif
+    // #endif
 
     // Resume Timer on exit
     TACTL |= MC_1; 
@@ -214,16 +216,11 @@ __attribute__ ((section (".tcb.attest"))) void tcb_attest()
     uint8_t * metadata = (uint8_t*)(METADATA_ADDR);
 
     my_memcpy((uint8_t*)(LOG_BASE_XS), (uint8_t*)(LOG_BASE), LOG_SIZE);
-
     my_memcpy((uint8_t*)(CHAL_XS), (uint8_t*)(CHAL_BASE), CHAL_SIZE);
-
-    hmac(response, key, (uint32_t) KEY_SIZE, (uint8_t*)(ATTEST_DATA_ADDR), (uint32_t) ATTEST_SIZE);
-
-    hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(CHAL_XS), (uint32_t) CHAL_SIZE);
-
-    hmac(response, response, (uint32_t) KEY_SIZE, metadata, (uint32_t) METADATA_SIZE);
-
-    hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
+    // hmac(response, key, (uint32_t) KEY_SIZE, (uint8_t*)(ATTEST_DATA_ADDR), (uint32_t) ATTEST_SIZE);
+    // hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(CHAL_XS), (uint32_t) CHAL_SIZE);
+    // hmac(response, response, (uint32_t) KEY_SIZE, metadata, (uint32_t) METADATA_SIZE);
+    // hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
 
     tcb_wait();
 
@@ -262,104 +259,108 @@ __attribute__ ((section (".tcb.wait"))) void tcb_wait(){
     uint8_t app = 10;
     uint8_t * buffer_8_to_16 = (uint8_t*)(TMP_16_BUFF);
 
-    while(out == 0){
-        uint8_t readyByte = 0;
-        uint8_t sendByte = ACK;
-        
-        while(readyByte != ACK){
-            sendBuffer(&sendByte, 1);
-            recvBuffer(&readyByte, 1);    
+    // while(out == 0){
+        for(int i=0; i<CHAL_SIZE; i++){
+            recv_new_chal[i] = 0;
         }
+
+        // uint8_t readyByte = 0;
+        // uint8_t sendByte = ACK;
+        
+        // while(readyByte != ACK){
+        //     sendBuffer(&sendByte, 1);
+        //     recvBuffer(&readyByte, 1);    
+        // }
 
         unsigned int i;
         
         //// send H, METADATA, CFLog (2)
+        // AUTOMATED SIM VERSION
+        sendBuffer(response, KEY_SIZE + METADATA_SIZE + *((uint16_t*)(CLOGP_ADDR))*2);
         // H
-        sendBuffer(response, KEY_SIZE);
-        P3OUT++;
+        // sendBuffer(response, KEY_SIZE);
+        // P3OUT++;
         // metadata
-        sendBuffer(metadata, METADATA_SIZE);
-        P3OUT++;
+        // sendBuffer(metadata, METADATA_SIZE);
+        // P3OUT++;
         // cflog
-        sendBuffer(cflog, *((uint16_t*)(CLOGP_ADDR))*2);      
+        // sendBuffer(cflog, *((uint16_t*)(CLOGP_ADDR))*2);      
         
         P3OUT++;
         //// Receive app, chal', AER_min, AER_max, Auth to Prv (6)
+        // SIMULATE recieve 1 + 32 + 2 + 2 + 32 = 69
+        recvBuffer(response, 1 + KEY_SIZE + 2 + 2 + KEY_SIZE);
         // app
-        echo_rx_tx(&app, 1);
-
+        // echo_rx_tx(&app, 1);
         P3OUT++;
         //chal'
-        echo_rx_tx(recv_new_chal, KEY_SIZE);
-
+        // echo_rx_tx(recv_new_chal, KEY_SIZE);
         P3OUT++;
         // AER_min
-        echo_rx_tx(buffer_8_to_16, 2);
-
-        *((uint16_t*)(ERMIN_ADDR)) = (buffer_8_to_16[0] << 8) | buffer_8_to_16[1];
+        // echo_rx_tx(buffer_8_to_16, 2);
+        // *((uint16_t*)(ERMIN_ADDR)) = (ER_M[0] << 8) | buffer_8_to_16[1];
         P3OUT++;
-
         // AER_max
-        echo_rx_tx(buffer_8_to_16, 2);
-
-        *((uint16_t*)(ERMAX_ADDR)) = (buffer_8_to_16[0] << 8) | (buffer_8_to_16[1]);
-
+        // echo_rx_tx(buffer_8_to_16, 2);
+        // *((uint16_t*)(ERMAX_ADDR)) = (buffer_8_to_16[0] << 8) | (buffer_8_to_16[1]);
         //auth
-        echo_rx_tx(recv_auth, KEY_SIZE);
+        // echo_rx_tx(recv_auth, KEY_SIZE);
 
         P3OUT++;
         // Authenticate & produce 'out'
         for(i=0; i<KEY_SIZE; i++){
             if(recv_new_chal[i] > challenge[i]){
-                out = 1;
-                break;
+                out = 1; // for this simulation, set both as 1
             } else if(recv_new_chal[i] < challenge[i]){
-                out = 0;
-                break;
+                out = 1; // for this simulation, set both as 1
             }
         }
         P3OUT++;
         // check auth token
         uint8_t * auth =  (uint8_t*)(PRV_AUTH);
+        for(int i=0; i<CHAL_SIZE; i++){
+            auth[i] = 0;
+        }
 
-        hmac(auth, key, (uint32_t) KEY_SIZE, recv_new_chal, (uint32_t) KEY_SIZE);
+        // Simulate 4 hmac calls
+        // hmac(auth, key, (uint32_t) KEY_SIZE, recv_new_chal, (uint32_t) KEY_SIZE);
+        // hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+        // hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
+        // hmac(auth, auth, (uint32_t) KEY_SIZE, &app, (uint32_t) 1);
 
         buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) >> 8);
         buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMIN_ADDR)) & 0x00ff);
         P3OUT++;
-        hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
 
         buffer_8_to_16[0] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) >> 8);
         buffer_8_to_16[1] = (uint8_t) (*((uint16_t*)(ERMAX_ADDR)) & 0x00ff);
         P3OUT++;
-        hmac(auth, auth, (uint32_t) KEY_SIZE, buffer_8_to_16, (uint32_t) 2);
 
-        P3OUT++;
-        hmac(auth, auth, (uint32_t) KEY_SIZE, &app, (uint32_t) 1);
-
-        sendBuffer(auth, KEY_SIZE);
-        recvBuffer(auth, KEY_SIZE);
+        // sendBuffer(auth, KEY_SIZE);
+        // recvBuffer(auth, KEY_SIZE);
         P3OUT++;
         
         out &= secure_memcmp(auth, recv_auth, KEY_SIZE);
         P3OUT++;
 
-        sendBuffer(&out, 1);
-        recvBuffer(&out, 1);
+        // sendBuffer(&out, 1);
+        // recvBuffer(&out, 1);
         P3OUT++;
         if(out == 0){
             // inauthentic vrf -- re-enter tcb_wait
             P2OUT = 0x55;
         } else {
+
             P2OUT = 0x0f;
             if(app == 1){
                 // vrf approved --> resume exec
                P2OUT |= 0xf0;
             } else {
                /********** TCB HEAL ************/
+               
                P2OUT |= 0x50;
                // "Shut Down"
-               _BIS_SR(CPUOFF);
+               // _BIS_SR(CPUOFF);
 
                // "Reset"
                //((void(*)(void))(*(uint16_t*)(0xFFFE)))();
@@ -368,18 +369,15 @@ __attribute__ ((section (".tcb.wait"))) void tcb_wait(){
         P3OUT++;
 
         //DEBUG: print old chal on vrf side
-        sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
-
+        // sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
         // Update challenge
-        my_memcpy((uint8_t * )(CHAL_BASE), (uint8_t * )(NEW_CHAL_ADDR), CHAL_SIZE);
-
+        // my_memcpy((uint8_t * )(CHAL_BASE), (uint8_t * )(NEW_CHAL_ADDR), CHAL_SIZE);
         //DEBUG: print new chal on vrf side
-        sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
+        // sendBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
         // recvBuffer((uint8_t * )(CHAL_BASE), CHAL_SIZE);
-
         //DEBUG: print first 16 bytes of attested memory
-        sendBuffer((uint8_t * )(ATTEST_DATA_ADDR), 16);
-    } // end while
+        // sendBuffer((uint8_t * )(ATTEST_DATA_ADDR), 16);
+    // } // end while
     
 }
 
@@ -426,56 +424,58 @@ __attribute__ ((section (".tcb.lib"))) int secure_memcmp(const uint8_t* s1, cons
 
 /************ UART COMS ************/
 __attribute__ ((section (".tcb.wait"))) void recvBuffer(uint8_t * rx_data, uint16_t size){
-    P3OUT ^= 0x40;
-    unsigned int i=0, j;
-    unsigned long time = 0;
-    while(i < size && time != UART_TIMEOUT){
+    P3OUT = rx_data[size-1];
+    while(P3IN != 0xff);
+    // P3OUT ^= 0x40;
+    // unsigned int i=0, j;
+    // unsigned long time = 0;
+    // while(i < size && time != UART_TIMEOUT){
         
-        #if IS_SIM == NOT_SIM
-        // wait while rx buffer is empty         // implementation only
-        while((UART_STAT & UART_RX_PND) != UART_RX_PND && time != UART_TIMEOUT){
-            time++;
-        }
-        UART_STAT |= UART_RX_PND;
-        #endif
+    //     #if IS_SIM == NOT_SIM
+    //     // wait while rx buffer is empty         // implementation only
+    //     while((UART_STAT & UART_RX_PND) != UART_RX_PND && time != UART_TIMEOUT){
+    //         time++;
+    //     }
+    //     UART_STAT |= UART_RX_PND;
+    //     #endif
 
-        if(time == UART_TIMEOUT){
-            break;
-        } else {
-            rx_data[i] = UART_RXD;
+    //     if(time == UART_TIMEOUT){
+    //         break;
+    //     } else {
+    //         rx_data[i] = UART_RXD;
             
-            #if IS_SIM == NOT_SIM
-            // implementation only
-            for(j=0; j<DELAY; j++)
-            {} // wait for buffer to clear before reading next char
-            #endif
+    //         #if IS_SIM == NOT_SIM
+    //         // implementation only
+    //         for(j=0; j<DELAY; j++)
+    //         {} // wait for buffer to clear before reading next char
+    //         #endif
             
-            i++;
-        }
-    }
-    P3OUT ^= 0x40;
+    //         i++;
+    //     }
+    // }
+    // P3OUT ^= 0x40;
 }
 
 __attribute__ ((section (".tcb.wait"))) void sendBuffer(uint8_t * tx_data, uint16_t size){
 
-    P3OUT ^= 0x20;
-    unsigned int i, j;
-    for(i=0; i<size; i++){
-        #if IS_SIM == NOT_SIM
-        // delay until tx buffer is empty // implementation only
-        while(UART_STAT & UART_TX_FULL);
-        #endif
+    P3OUT = tx_data[size-1];
+    while(P3IN != 0xff);
+    // unsigned int i, j;
+    // for(i=0; i<size; i++){
+    //     #if IS_SIM == NOT_SIM
+    //     // delay until tx buffer is empty // implementation only
+    //     while(UART_STAT & UART_TX_FULL);
+    //     #endif
 
-        UART_TXD = tx_data[i];
+    //     UART_TXD = tx_data[i];
         
-        #if IS_SIM == NOT_SIM
-        // only implementation
-        for(j=0; j<DELAY; j++)
-        {} // wait for buffer to clear before sending next char
-        #endif
+    //     #if IS_SIM == NOT_SIM
+    //     // only implementation
+    //     for(j=0; j<DELAY; j++)
+    //     {} // wait for buffer to clear before sending next char
+    //     #endif
 
-    }
-    P3OUT ^= 0x20;
+    // }
 }
 
 __attribute__ ((section (".tcb.wait"))) void echo_rx_tx(uint8_t * data, uint16_t size){

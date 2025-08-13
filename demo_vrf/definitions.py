@@ -2,6 +2,7 @@
 APP_LOGS_PATH = "../logs/"#"./"
 APP_NAME = "demo_prv"
 CFG_FILE_PATH = "./objs/cfg.bin"
+ASM_FUNCS_FILE_PATH = "./objs/asm_funcs.bin" 
 HMAC_PMEM_FILE_PATH = "./objs/pmem_hmac.bin"
 SHADOW_STACK_FILE_PATH = "./objs/shadow_stack.bin"
 
