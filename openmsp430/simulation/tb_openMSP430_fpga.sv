@@ -91,8 +91,8 @@ wire       ER_done = dut.ER_done;
 
 wire       puc_rst = dut.openMSP430_0.puc_rst;
 wire       acfa_reset = dut.openMSP430_0.acfa_0.cflow_reset;
-wire       vrased_reset = dut.openMSP430_0.acfa_0.vrased_reset;
-wire       garota_reset = dut.openMSP430_0.acfa_0.garota_reset;
+// wire       vrased_reset = dut.openMSP430_0.acfa_0.vrased_reset;
+// wire       garota_reset = dut.openMSP430_0.acfa_0.garota_reset;
 
 parameter TCB_att_min = 16'ha100;
 parameter TCB_att_max = 16'hbffe;

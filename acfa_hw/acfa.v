@@ -26,6 +26,10 @@ module acfa (
     
     e_state,
     inst_so,
+    inst_type,
+    inst_ad,
+    inst_as,
+    inst_jmp,
     
     cflow_hw_wen,
     cflow_log_ptr,
@@ -55,6 +59,10 @@ input           irq;
 input           gie;
 input   [3:0]   e_state;
 input   [7:0]   inst_so;
+input   [2:0]   inst_type;
+input   [7:0]   inst_ad;
+input   [7:0]   inst_as;
+input   [7:0]   inst_jmp;
 //input           jmp;
 //input           call;
 //
@@ -96,8 +104,13 @@ cflow_0 (
     .irq        (irq),
     .gie        (gie),
 
-    .e_state    (e_state),
-    .inst_so    (inst_so),
+    // instruction info
+    .e_state        (e_state),
+    .inst_so        (inst_so),
+    .inst_type      (inst_type),
+    .inst_ad        (inst_ad),
+    .inst_as        (inst_as),
+    .inst_jmp       (inst_jmp),
     
     .cflow_hw_wen (cflow_hw_wen),
     .cflow_log_ptr (cflow_log_ptr),
@@ -114,42 +127,43 @@ cflow_0 (
 //==================================================================
 // Active RoT Module: Uses modules from VRASED and GAROTA
 //==================================================================
-wire vrased_reset;// = 0;
-vrased #(
-) vrased_0 (
-   .clk        (clk),
-   .pc         (pc),
-   .data_en    (data_en),
-   .data_wr    (data_wr),
-   .data_addr  (data_addr),
+// wire vrased_reset;// = 0;
+// vrased #(
+// ) vrased_0 (
+//    .clk        (clk),
+//    .pc         (pc),
+//    .data_en    (data_en),
+//    .data_wr    (data_wr),
+//    .data_addr  (data_addr),
     
-   .dma_addr   (dma_addr),
-   .dma_en     (dma_en),
+//    .dma_addr   (dma_addr),
+//    .dma_en     (dma_en),
 
-   .irq        (irq),
+//    .irq        (irq),
     
-   .reset      (vrased_reset)
-);
+//    .reset      (vrased_reset)
+// );
 
-wire garota_reset;// = 0;
-garota garota_0 (
-    .clk        (clk),
-    .pc         (pc),
+// wire garota_reset;// = 0;
+// garota garota_0 (
+//     .clk        (clk),
+//     .pc         (pc),
 
-    .data_en    (data_en),
-    .data_wr    (data_wr),
-    .data_addr  (data_addr),
+//     .data_en    (data_en),
+//     .data_wr    (data_wr),
+//     .data_addr  (data_addr),
 
-	.dma_addr   (dma_addr),
-    .dma_en     (dma_en),
+// 	.dma_addr   (dma_addr),
+//     .dma_en     (dma_en),
 
-	.irq		(irq_detect),
+// 	.irq		(irq_detect),
 	
-	.gie               (gie),
+// 	.gie               (gie),
 
-    .reset      (garota_reset)
-);
+//     .reset      (garota_reset)
+// );
 
-assign reset = vrased_reset | garota_reset | cflow_reset;
+// assign reset = vrased_reset | garota_reset | cflow_reset;
+assign reset = cflow_reset;
 
 endmodule

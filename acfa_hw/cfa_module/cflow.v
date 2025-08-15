@@ -39,6 +39,10 @@ module cflow (
     
     e_state,
     inst_so,
+    inst_type,
+    inst_ad,
+    inst_as,
+    inst_jmp,
     
     cflow_hw_wen,
     cflow_log_ptr,
@@ -66,7 +70,10 @@ input           irq;
 input           gie;
 input   [3:0]   e_state;
 input   [7:0]   inst_so;
-
+input   [2:0]   inst_type;
+input   [7:0]   inst_ad;
+input   [7:0]   inst_as;
+input   [7:0]   inst_jmp;
 // 
 output          cflow_hw_wen;
 output  [15:0]  cflow_log_ptr;
@@ -78,7 +85,7 @@ output          flush;
 output          boot;
 output          ER_done;
 
-parameter LOG_SIZE = 16'h0080; // # of 2-byte words
+parameter LOG_SIZE = 16'h0100; // # of 2-byte words
 parameter TCB_max = 16'hdffe; 
 parameter RESET_addr = 16'he000;
 parameter PMEM_min = 16'he03e;
@@ -91,18 +98,18 @@ wire loop_detect_out;
 wire acfa_nmi = irq_ta0 | flush | ER_done | boot;
 // wire pc_TCB_exit = (pc == TCB_max);
 
-boundary_monitor #() 
-boundary_monitor_0 ( // Boundary Protection
-    .clk        (clk),
-    .pc         (pc),
-    .data_addr  (data_addr),
-    .data_en    (data_wr),
-    .dma_addr   (dma_addr),
-    .dma_en     (dma_en),
-    .ER_min     (ER_min),
-    .ER_max     (ER_max),
-    .reset      (reset) 
-);
+// boundary_monitor #() 
+// boundary_monitor_0 ( // Boundary Protection
+//     .clk        (clk),
+//     .pc         (pc),
+//     .data_addr  (data_addr),
+//     .data_en    (data_wr),
+//     .dma_addr   (dma_addr),
+//     .dma_en     (dma_en),
+//     .ER_min     (ER_min),
+//     .ER_max     (ER_max),
+//     .reset      (reset) 
+// );
 
 log_monitor #(
     .LOG_SIZE (LOG_SIZE)
@@ -141,6 +148,10 @@ branch_monitor_0( //Branch Monitor
 
     .e_state    (e_state),
     .inst_so    (inst_so),
+    .inst_type   (inst_type),
+    .inst_ad    (inst_ad),
+    .inst_as    (inst_as),
+    .inst_jmp   (inst_jmp),
     
     .branch_detect (branch_detect)
 );

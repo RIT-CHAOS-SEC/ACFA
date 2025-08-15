@@ -215,14 +215,15 @@ __attribute__ ((section (".tcb.attest"))) void tcb_attest()
     uint8_t * key = (uint8_t*)(KEY_ADDR);
     uint8_t * metadata = (uint8_t*)(METADATA_ADDR);
 
-    my_memcpy((uint8_t*)(LOG_BASE_XS), (uint8_t*)(LOG_BASE), LOG_SIZE);
-    my_memcpy((uint8_t*)(CHAL_XS), (uint8_t*)(CHAL_BASE), CHAL_SIZE);
+    // my_memcpy((uint8_t*)(LOG_BASE_XS), (uint8_t*)(LOG_BASE), LOG_SIZE);
+    // my_memcpy((uint8_t*)(CHAL_XS), (uint8_t*)(CHAL_BASE), CHAL_SIZE);
+    
     // hmac(response, key, (uint32_t) KEY_SIZE, (uint8_t*)(ATTEST_DATA_ADDR), (uint32_t) ATTEST_SIZE);
     // hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(CHAL_XS), (uint32_t) CHAL_SIZE);
     // hmac(response, response, (uint32_t) KEY_SIZE, metadata, (uint32_t) METADATA_SIZE);
     // hmac(response, response, (uint32_t) KEY_SIZE, (uint8_t*)(LOG_BASE_XS), (uint32_t) *((uint16_t*)(CLOGP_ADDR))*2);
 
-    tcb_wait();
+    // tcb_wait();
 
     // restore return address
     __asm__ volatile("mov    #0x500,   r6" "\n\t");

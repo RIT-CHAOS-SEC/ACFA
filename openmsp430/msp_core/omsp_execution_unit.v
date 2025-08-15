@@ -209,7 +209,6 @@ omsp_register_file register_file_0 (
     .scan_enable  (scan_enable)   // Scan enable (active during scan shifting)
 );
 
-
 //=============================================================================
 // 3)  SOURCE OPERAND MUXING
 //=============================================================================

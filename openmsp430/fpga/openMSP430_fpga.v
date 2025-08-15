@@ -740,6 +740,7 @@ omsp_timerA timerA_0 (
 //    .puc_rst      (puc_rst)        // Main system reset
 //);
 
+/*
 wire [3:0] anode; // anode signals of the 7-segment LED display
 wire [6:0] LED_out; // cathode patterns of the 7-segment LED display
 wire [15:0] pc_out;
@@ -781,7 +782,8 @@ my_7_seg_driver driver_7segment_0(
     .anode          (anode), // anode signals of the 7-segment LED display
     .LED_out        (LED_out)// cathode patterns of the 7-segment LED display
 );
-  
+*/
+
 //
 // Simple full duplex UART (8N1 protocol)
 //----------------------------------------
@@ -1045,24 +1047,24 @@ IBUF  SW0_PIN        (.O(p3_din[0]),                   .I(SW0));
 
 // LEDs (Port 1 outputs)
 //-----------------------
-wire [7:0] upper_LEDs; 
-assign upper_LEDs[0] = (ctrl_out[0] & ~p3_din[7] & ~p3_din[6]) | (stat_out[0] & p3_din[7] & ~p3_din[6]) | (p2_dout[7] & p3_din[6]);
-assign upper_LEDs[1] = (ctrl_out[1] & ~p3_din[7] & ~p3_din[6]) | (stat_out[1] & p3_din[7] & ~p3_din[6]) | (p2_dout[6] & p3_din[6]);
-assign upper_LEDs[2] = (ctrl_out[2] & ~p3_din[7] & ~p3_din[6]) | (stat_out[2] & p3_din[7] & ~p3_din[6]) | (p2_dout[5] & p3_din[6]);
-assign upper_LEDs[3] = (ctrl_out[3] & ~p3_din[7] & ~p3_din[6]) | (stat_out[3] & p3_din[7] & ~p3_din[6]) | (p2_dout[4] & p3_din[6]);
-assign upper_LEDs[4] = (ctrl_out[4] & ~p3_din[7] & ~p3_din[6]) | (stat_out[4] & p3_din[7] & ~p3_din[6]) | (p2_dout[3] & p3_din[6]);
-assign upper_LEDs[5] = (ctrl_out[5] & ~p3_din[7] & ~p3_din[6]) | (stat_out[5] & p3_din[7] & ~p3_din[6]) | (p2_dout[2] & p3_din[6]);
-assign upper_LEDs[6] = (ctrl_out[6] & ~p3_din[7] & ~p3_din[6]) | (stat_out[6] & p3_din[7] & ~p3_din[6]) | (p2_dout[1] & p3_din[6]);
-assign upper_LEDs[7] = ctr[1] | ctr[0];//(ctrl_out[7] & ~p3_din[7] & ~p3_din[6]) | (stat_out[7] & p3_din[7] & ~p3_din[6]) | (p2_dout[0] & p3_din[6]);
+// wire [7:0] upper_LEDs; 
+// assign upper_LEDs[0] = (ctrl_out[0] & ~p3_din[7] & ~p3_din[6]) | (stat_out[0] & p3_din[7] & ~p3_din[6]) | (p2_dout[7] & p3_din[6]);
+// assign upper_LEDs[1] = (ctrl_out[1] & ~p3_din[7] & ~p3_din[6]) | (stat_out[1] & p3_din[7] & ~p3_din[6]) | (p2_dout[6] & p3_din[6]);
+// assign upper_LEDs[2] = (ctrl_out[2] & ~p3_din[7] & ~p3_din[6]) | (stat_out[2] & p3_din[7] & ~p3_din[6]) | (p2_dout[5] & p3_din[6]);
+// assign upper_LEDs[3] = (ctrl_out[3] & ~p3_din[7] & ~p3_din[6]) | (stat_out[3] & p3_din[7] & ~p3_din[6]) | (p2_dout[4] & p3_din[6]);
+// assign upper_LEDs[4] = (ctrl_out[4] & ~p3_din[7] & ~p3_din[6]) | (stat_out[4] & p3_din[7] & ~p3_din[6]) | (p2_dout[3] & p3_din[6]);
+// assign upper_LEDs[5] = (ctrl_out[5] & ~p3_din[7] & ~p3_din[6]) | (stat_out[5] & p3_din[7] & ~p3_din[6]) | (p2_dout[2] & p3_din[6]);
+// assign upper_LEDs[6] = (ctrl_out[6] & ~p3_din[7] & ~p3_din[6]) | (stat_out[6] & p3_din[7] & ~p3_din[6]) | (p2_dout[1] & p3_din[6]);
+// assign upper_LEDs[7] = ctr[1] | ctr[0];//(ctrl_out[7] & ~p3_din[7] & ~p3_din[6]) | (stat_out[7] & p3_din[7] & ~p3_din[6]) | (p2_dout[0] & p3_din[6]);
 
-OBUF  LED15_PIN      (.I(upper_LEDs[7]),  .O(LED15));
-OBUF  LED14_PIN      (.I(upper_LEDs[6]),  .O(LED14)); 
-OBUF  LED13_PIN      (.I(upper_LEDs[5]),  .O(LED13));
-OBUF  LED12_PIN      (.I(upper_LEDs[4]),  .O(LED12));
-OBUF  LED11_PIN      (.I(upper_LEDs[3]),  .O(LED11));
-OBUF  LED10_PIN      (.I(upper_LEDs[2]),  .O(LED10)); 
-OBUF  LED9_PIN       (.I(upper_LEDs[1]),  .O(LED9));
-OBUF  LED8_PIN       (.I(upper_LEDs[0]),  .O(LED8));
+// OBUF  LED15_PIN      (.I(upper_LEDs[7]),  .O(LED15));
+// OBUF  LED14_PIN      (.I(upper_LEDs[6]),  .O(LED14)); 
+// OBUF  LED13_PIN      (.I(upper_LEDs[5]),  .O(LED13));
+// OBUF  LED12_PIN      (.I(upper_LEDs[4]),  .O(LED12));
+// OBUF  LED11_PIN      (.I(upper_LEDs[3]),  .O(LED11));
+// OBUF  LED10_PIN      (.I(upper_LEDs[2]),  .O(LED10)); 
+// OBUF  LED9_PIN       (.I(upper_LEDs[1]),  .O(LED9));
+// OBUF  LED8_PIN       (.I(upper_LEDs[0]),  .O(LED8));
 OBUF  LED7_PIN       (.I(p3_dout[7] & p3_dout_en[7]),  .O(LED7));
 OBUF  LED6_PIN       (.I(p3_dout[6] & p3_dout_en[6]),  .O(LED6));
 OBUF  LED5_PIN       (.I(p3_dout[5] & p3_dout_en[5]),  .O(LED5));
@@ -1085,18 +1087,18 @@ IBUF  BTN0_PIN       (.O(),                            .I(BTN0));
 
 // Four-Sigit, Seven-Segment LED Display
 //---------------------------------------
-OBUF  SEG_A_PIN      (.I(LED_out[6]),                      .O(SEG_A));
-OBUF  SEG_B_PIN      (.I(LED_out[5]),                      .O(SEG_B));
-OBUF  SEG_C_PIN      (.I(LED_out[4]),                      .O(SEG_C));
-OBUF  SEG_D_PIN      (.I(LED_out[3]),                      .O(SEG_D));
-OBUF  SEG_E_PIN      (.I(LED_out[2]),                      .O(SEG_E));
-OBUF  SEG_F_PIN      (.I(LED_out[1]),                      .O(SEG_F));
-OBUF  SEG_G_PIN      (.I(LED_out[0]),                      .O(SEG_G));
-OBUF  SEG_DP_PIN     (.I(),                     .O(SEG_DP));
-OBUF  SEG_AN0_PIN    (.I(anode[0]),                    .O(SEG_AN0));
-OBUF  SEG_AN1_PIN    (.I(anode[1]),                    .O(SEG_AN1));
-OBUF  SEG_AN2_PIN    (.I(anode[2]),                    .O(SEG_AN2));
-OBUF  SEG_AN3_PIN    (.I(anode[3]),                    .O(SEG_AN3));
+// OBUF  SEG_A_PIN      (.I(LED_out[6]),                      .O(SEG_A));
+// OBUF  SEG_B_PIN      (.I(LED_out[5]),                      .O(SEG_B));
+// OBUF  SEG_C_PIN      (.I(LED_out[4]),                      .O(SEG_C));
+// OBUF  SEG_D_PIN      (.I(LED_out[3]),                      .O(SEG_D));
+// OBUF  SEG_E_PIN      (.I(LED_out[2]),                      .O(SEG_E));
+// OBUF  SEG_F_PIN      (.I(LED_out[1]),                      .O(SEG_F));
+// OBUF  SEG_G_PIN      (.I(LED_out[0]),                      .O(SEG_G));
+// OBUF  SEG_DP_PIN     (.I(),                     .O(SEG_DP));
+// OBUF  SEG_AN0_PIN    (.I(anode[0]),                    .O(SEG_AN0));
+// OBUF  SEG_AN1_PIN    (.I(anode[1]),                    .O(SEG_AN1));
+// OBUF  SEG_AN2_PIN    (.I(anode[2]),                    .O(SEG_AN2));
+// OBUF  SEG_AN3_PIN    (.I(anode[3]),                    .O(SEG_AN3));
 
 //assign SEG_A = LED_out[6];
 //assign SEG_B = LED_out[5];

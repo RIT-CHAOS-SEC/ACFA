@@ -18,8 +18,8 @@ module cflogmem (
 
 // PARAMETERs
 //============ 
-parameter MEM_SIZE   =  256;       // Memory size in bytes
-parameter ADDR_MSB   =  7;         // MSB of the address bus
+parameter MEM_SIZE   =  512;       // Memory size in bytes
+parameter ADDR_MSB   =  8;         // MSB of the address bus
 // ADDR_MSB = LOG_2(MEM_SIZE)-1
 
 // OUTPUTs

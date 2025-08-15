@@ -170,8 +170,8 @@ wire [15:0]           chal_rd = chal_dout & {16{chal_cen & ~|per_we}};
 
 // Control-Flow Logs Registers
 //------------------------------  
-parameter               CFLOW_LOGS_ADDR_MSB   =   7;
-parameter               CFLOW_LOGS_SIZE   =  16'h0080;     // # of 16-byte words
+parameter               CFLOW_LOGS_ADDR_MSB   =   8;
+parameter               CFLOW_LOGS_SIZE   =  16'h0100;     // # of 16-byte words
                                                           
 parameter       [14:0] CFLOW_LOGS_BASE_ADDR = 14'h01b0;//METADATA_BASE_ADDR+METADATA_SIZE;    // Spans 0x1a6-0x3a6
 parameter       [13:0] CFLOW_LOGS_PER_ADDR  = CFLOW_LOGS_BASE_ADDR[14:1];

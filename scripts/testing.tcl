@@ -1,6 +1,3 @@
-for {set i 0} {$i <= 100} {incr i} {
-    puts -nonewline "\rProgress: $i%"
-    flush stdout
-    after 5  ;
+while {[get_value {/tb_openMSP430_fpga/finish}] == 0} {
+    run 500us
 }
-puts ""  ;

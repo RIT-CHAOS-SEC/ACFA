@@ -616,6 +616,10 @@ acfa acfa_0(
     .gie            (gie),
     .e_state        (e_state),
     .inst_so        (inst_so),
+    .inst_type      (inst_type),
+    .inst_ad        (inst_ad),
+    .inst_as        (inst_as),
+    .inst_jmp       (inst_jmp),
     
     .cflow_hw_wen       (cflow_hw_wen),
     .cflow_log_ptr  (cflow_log_ptr),
