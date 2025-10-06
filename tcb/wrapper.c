@@ -73,13 +73,12 @@
 // TCB version // AUTOMATED: Do not edit
 #define NOT_SIM   0
 #define SIM   1
-#define IS_SIM  NOT_SIM
+#define IS_SIM  SIM
 //
 
 /**********     Function Definitions      *********/
 __attribute__ ((section (".tcb.lib"))) void my_memset(uint8_t* ptr, int len, uint8_t val);
 void my_memcpy(uint8_t* dst, uint8_t* src, int size);
-int secure_memcmp(const uint8_t* s1, const uint8_t* s2, int size);
 void tcb();
 void tcb_attest();
 void tcb_wait();
@@ -96,6 +95,7 @@ extern void acfa_exit();
 extern void hmac(uint8_t *mac, uint8_t *key, uint32_t keylen, uint8_t *data, uint32_t datalen);
 #else
 #define hmac my_hmac
+// not secure- just hmac placeholder quick vivado simulation
 void my_hmac(uint8_t *mac, uint8_t *key, uint32_t keylen, uint8_t *data, uint32_t datalen);
 #endif
 
@@ -341,13 +341,13 @@ __attribute__ ((section (".tcb.wait"))) void tcb_wait(){
         recvBuffer(auth, KEY_SIZE);
         P3OUT++;
         
-        out &= secure_memcmp(auth, recv_auth, KEY_SIZE);
+        out &= cst_memeq(auth, recv_auth, KEY_SIZE);
         P3OUT++;
 
         sendBuffer(&out, 1);
         recvBuffer(&out, 1);
         P3OUT++;
-        if(out == 0){
+        if(out != 0){
             // inauthentic vrf -- re-enter tcb_wait
             P2OUT = 0x55;
         } else {
@@ -408,20 +408,17 @@ __attribute__ ((section (".tcb.lib"))) void my_memcpy(uint8_t* dst, uint8_t* src
   for(i=0; i<size; i++) dst[i] = src[i];
 }
 
-__attribute__ ((section (".tcb.lib"))) int secure_memcmp(const uint8_t* s1, const uint8_t* s2, int size) {
-    int res = 1;
-    int first = 1;
-    for(int i = 0; i < size; i++) {
-      if (first == 1 && s1[i] > s2[i]) {
-        res = 0;
-        first = 0;
-      }
-      else if (first == 1 && s1[i] < s2[i]) {
-        res = 0;
-        first = 0;
-      }
+__attribute__ ((section (".tcb.lib"))) int cst_memeq(const unsigned char *x_, const unsigned char *y_, unsigned int n) {
+    const volatile unsigned char *volatile x = (const volatile unsigned char *volatile) x_;
+    const volatile unsigned char *volatile y = (const volatile unsigned char *volatile) y_;
+    volatile unsigned int d = 0U;
+    unsigned int i;
+
+    for (i = 0; i < n; i++) {
+        d |= x[i] ^ y[i];
     }
-    return res;
+
+    return (1 & ((d - 1) >> 8)) - 1;
 }
 
 /************ UART COMS ************/
